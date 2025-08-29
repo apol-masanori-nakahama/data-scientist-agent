@@ -52,7 +52,8 @@ def train_candidates(df: pd.DataFrame, task: Task, ycol: str, random_state=42) -
             "rf_reg": RandomForestRegressor(n_estimators=rf_reg_estimators, random_state=random_state)
         }
         for name, m in models.items():
-            scores = cross_val_score(m, X, y, cv=cv_folds, scoring="neg_root_mean_squared_error", n_jobs=parallel_jobs)
+            folds = min(cv_folds, max(2, min(len(X), 5)))
+            scores = cross_val_score(m, X, y, cv=folds, scoring="neg_root_mean_squared_error", n_jobs=parallel_jobs)
             res[name] = {"rmse": float(-scores.mean()), "rmse_base": rmse_base}
     elif task == "classification":
         y_enc = y.astype("category").cat.codes
@@ -63,7 +64,8 @@ def train_candidates(df: pd.DataFrame, task: Task, ycol: str, random_state=42) -
             "rf_clf": RandomForestClassifier(n_estimators=rf_clf_estimators, random_state=random_state)
         }
         for name, m in models.items():
-            scores = cross_val_score(m, X, y_enc, cv=cv_folds, scoring="f1_macro", n_jobs=parallel_jobs)
+            folds = min(cv_folds, max(2, min(len(X), 5)))
+            scores = cross_val_score(m, X, y_enc, cv=folds, scoring="f1_macro", n_jobs=parallel_jobs)
             res[name] = {"f1_macro": float(scores.mean()), "f1_base": f1b}
     else:
         # 簡易時系列：ラグ特徴量で回帰
@@ -75,7 +77,8 @@ def train_candidates(df: pd.DataFrame, task: Task, ycol: str, random_state=42) -
         models = {"linreg_lag": LinearRegression(), "rf_reg_lag": RandomForestRegressor(n_estimators=200, random_state=random_state)}
         res = {}
         for name, m in models.items():
-            tscv = TimeSeriesSplit(n_splits=(3 if fast else 5))
+            n_splits = min(3 if fast else 5, max(2, min(len(X), 5))-1)
+            tscv = TimeSeriesSplit(n_splits=n_splits)
             scores = cross_val_score(m, X, y, cv=tscv, scoring="neg_root_mean_squared_error", n_jobs=parallel_jobs)
             res[name] = {"rmse": float(-scores.mean())}
     # ベスト選択

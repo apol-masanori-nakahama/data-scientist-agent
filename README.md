@@ -63,6 +63,43 @@ CLI=1 FAST_TEST=1 NO_MULTIPROC=1 python app.py /絶対パス/your.csv
 - `FAST_TEST=1` で高速化（CV 分割縮小、木の本数減）
 - `NO_MULTIPROC=1` で並列を抑止（ResourceTracker 警告の回避）
 
+#### S3 アップロード（任意）
+`boto3` を使用して成果物を S3 に送れます。環境変数 `S3_BUCKET` を設定し、必要なら `S3_PREFIX` を指定します（既定: `data-scientist-agent/`）。
+
+```bash
+export S3_BUCKET=your-bucket
+export S3_PREFIX=data-scientist-agent/
+python scripts/analyze.py --csv data/sample.csv --s3
+```
+
+### API (FastAPI)
+```bash
+uvicorn src.api.server:app --host 0.0.0.0 --port 8000
+
+# ヘルス
+curl http://localhost:8000/health
+# 解析
+curl -F file=@data/sample.csv -F use_llm=false -F reflect_rounds=0 http://localhost:8000/analyze
+# 認証（任意）: 環境変数 API_KEY を設定すると要求ヘッダ X-API-Key を必須化
+# export API_KEY=secret && uvicorn src.api.server:app --port 8000
+curl -H "X-API-Key: secret" -F file=@data/sample.csv http://localhost:8000/analyze
+
+# 非同期ジョブ
+curl -F file=@data/sample.csv http://localhost:8000/jobs/analyze
+curl http://localhost:8000/jobs/<job_id>
+
+# メトリクス（Prometheus）
+curl http://localhost:8000/metrics
+```
+
+#### S3 アップロード（API）
+`upload_s3=true` を指定し、`S3_BUCKET` をサーバ側の環境変数に設定してください。
+
+```bash
+export S3_BUCKET=your-bucket
+curl -F file=@data/sample.csv -F upload_s3=true http://localhost:8000/analyze
+```
+
 ### Docker
 ```bash
 # Dockerfile が .dockerfile の場合
