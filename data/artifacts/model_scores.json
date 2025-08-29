@@ -1,0 +1,15 @@
+{
+  "task": "classification",
+  "target": "Embarked",
+  "scores": {
+    "logreg": {
+      "f1_macro": 0.3695493335647072,
+      "f1_base": 0.26162790697674415
+    },
+    "rf_clf": {
+      "f1_macro": 0.6636269680999536,
+      "f1_base": 0.26162790697674415
+    }
+  },
+  "best": "rf_clf"
+}

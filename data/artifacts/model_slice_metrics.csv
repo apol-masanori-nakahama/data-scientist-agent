@@ -1,0 +1,280 @@
+feature,value,count,accuracy,f1_binary_like
+Cabin,A11,1,0.0,0.0
+Cabin,A29,1,0.0,0.0
+Cabin,A34,1,1.0,
+Cabin,B10,1,0.0,0.0
+Cabin,B11,1,1.0,
+Cabin,B45,1,1.0,
+Cabin,B57 B59 B63 B66,1,1.0,0.0
+Cabin,B58 B60,1,1.0,0.0
+Cabin,C130,1,1.0,0.0
+Cabin,C39,1,1.0,
+Cabin,C6,1,1.0,0.0
+Cabin,C7,1,0.0,
+Cabin,C80,1,1.0,0.0
+Cabin,C85,1,0.0,0.0
+Cabin,C86,1,0.0,0.0
+Cabin,C97,1,0.0,
+Cabin,D,1,0.0,0.0
+Cabin,D10 D12,1,0.0,0.0
+Cabin,D15,1,0.0,0.0
+Cabin,D19,1,1.0,
+Cabin,D28,1,1.0,
+Cabin,D30,1,1.0,
+Cabin,D37,1,0.0,0.0
+Cabin,D43,1,0.0,0.0
+Cabin,E39 E41,1,1.0,0.0
+Cabin,E60,1,1.0,
+Cabin,F,1,1.0,
+Cabin,F2,1,1.0,
+Name,"Aks, Master. Philip Frank",1,1.0,
+Name,"Andersson, Mr. Johan Samuel",1,1.0,
+Name,"Andrew, Mr. Frank Thomas",1,1.0,
+Name,"Angheloff, Mr. Minko",1,1.0,
+Name,"Aronsson, Mr. Ernst Axel Algot",1,1.0,
+Name,"Asplund, Mr. Carl Oscar Vilhelm Gustafsson",1,1.0,
+Name,"Asplund, Mr. Johan Charles",1,1.0,
+Name,"Assaf, Mr. Gerios",1,0.0,0.0
+Name,"Baccos, Mr. Raffull",1,0.0,0.0
+Name,"Badman, Miss. Emily Louisa",1,1.0,
+Name,"Barry, Miss. Julia",1,0.0,0.0
+Name,"Beattie, Mr. Thomson",1,1.0,0.0
+Name,"Bird, Miss. Ellen",1,0.0,
+Name,"Bjorklund, Mr. Ernst Herbert",1,1.0,
+Name,"Bonnell, Miss. Caroline",1,0.0,
+Name,"Boulos, Master. Akar",1,0.0,0.0
+Name,"Bowen, Miss. Grace Scott",1,1.0,0.0
+Name,"Bradley, Miss. Bridget Delia",1,0.0,0.0
+Name,"Brandeis, Mr. Emil",1,0.0,0.0
+Name,"Bucknell, Mrs. William Robert (Emma Eliza Ward)",1,0.0,0.0
+Name,"Burns, Miss. Mary Delia",1,0.0,0.0
+Name,"Chisholm, Mr. Roderick Robert Crispin",1,1.0,
+Name,"Colbert, Mr. Patrick",1,0.0,0.0
+Name,"Collett, Mr. Sidney C Stuart",1,1.0,
+Name,"Corbett, Mrs. Walter H (Irene Colvin)",1,1.0,
+Name,"Cotterill, Mr. Henry Harry""""",1,1.0,
+Name,"Coutts, Mrs. William (Winnie Minnie"" Treanor)""",1,1.0,
+Name,"Cumings, Mr. John Bradley",1,0.0,0.0
+Name,"Daly, Miss. Margaret Marcella Maggie""""",1,0.0,0.0
+Name,"Daniels, Miss. Sarah",1,0.0,
+Name,"Davies, Mr. Joseph",1,1.0,
+Name,"Davies, Mrs. John Morgan (Elizabeth Agnes Mary White) ",1,1.0,
+Name,"Davison, Mr. Thomas Henry",1,1.0,
+Name,"Deacon, Mr. Percy William",1,1.0,
+Name,"Delalic, Mr. Redjo",1,1.0,
+Name,"Dodge, Mrs. Washington (Ruth Vidaver)",1,1.0,
+Name,"Douglas, Mrs. Frederick Charles (Mary Helene Baxter)",1,1.0,0.0
+Name,"Douglas, Mrs. Walter Donald (Mahala Dutton)",1,0.0,0.0
+Name,"Drapkin, Miss. Jennie",1,1.0,
+Name,"Dyker, Mrs. Adolf Fredrik (Anna Elisabeth Judith Andersson)",1,1.0,
+Name,"Evans, Miss. Edith Corse",1,0.0,0.0
+Name,"Fleming, Miss. Honora",1,0.0,0.0
+Name,"Ford, Mr. Arthur",1,1.0,
+Name,"Franklin, Mr. Charles (Charles Fardon)",1,1.0,
+Name,"Gale, Mr. Harry",1,1.0,
+Name,"Geiger, Miss. Amalie",1,1.0,0.0
+Name,"Gibson, Miss. Dorothy Winifred",1,1.0,0.0
+Name,"Giles, Mr. Edgar",1,1.0,
+Name,"Giles, Mr. Ralph",1,1.0,
+Name,"Greenfield, Mrs. Leo David (Blanche Strouse)",1,0.0,0.0
+Name,"Hansen, Mrs. Claus Peter (Jennie L Howard)",1,1.0,
+Name,"Head, Mr. Christopher",1,1.0,
+Name,"Herman, Mr. Samuel",1,1.0,
+Name,"Hipkins, Mr. William Edward",1,1.0,
+Name,"Hirvonen, Mrs. Alexander (Helga E Lindqvist)",1,1.0,
+Name,"Hyman, Mr. Abraham",1,1.0,
+Name,"Ilmakangas, Miss. Ida Livija",1,1.0,
+Name,"Jefferys, Mr. Ernest Wilfred",1,1.0,
+Name,"Jonsson, Mr. Nils Hilding",1,1.0,
+Name,"Julian, Mr. Henry Forbes",1,1.0,
+Name,"Karnes, Mrs. J Frank (Claire Bennett)",1,1.0,
+Name,"Khalil, Mrs. Betros (Zahie Maria"" Elias)""",1,0.0,0.0
+Name,"Kimball, Mrs. Edwin Nelson Jr (Gertrude Parsons)",1,1.0,
+Name,"Kink-Heilmann, Mrs. Anton (Luise Heilmann)",1,1.0,
+Name,"Lindeberg-Lind, Mr. Erik Gustaf (Mr Edward Lingrey"")""",1,1.0,
+Name,"Lines, Mrs. Ernest H (Elizabeth Lindsey James)",1,1.0,
+Name,"Lyntakoff, Mr. Stanko",1,1.0,
+Name,"Makinen, Mr. Kalle Edvard",1,1.0,
+Name,"Malachard, Mr. Noel",1,0.0,0.0
+Name,"Mallet, Mrs. Albert (Antoinette Magnin)",1,0.0,0.0
+Name,"Marvin, Mrs. Daniel Warner (Mary Graham Carmichael Farquarson)",1,1.0,
+Name,"McCarthy, Miss. Catherine Katie""""",1,0.0,0.0
+Name,"McNeill, Miss. Bridget",1,0.0,0.0
+Name,"Midtsjo, Mr. Karl Albert",1,1.0,
+Name,"Miles, Mr. Frank",1,1.0,
+Name,"Mulvihill, Miss. Bertha E",1,0.0,0.0
+Name,"Nakid, Mrs. Said (Waika Mary"" Mowad)""",1,0.0,0.0
+Name,"Nasr, Mr. Mustafa",1,0.0,0.0
+Name,"Naughton, Miss. Hannah",1,0.0,0.0
+Name,"Nesson, Mr. Israel",1,1.0,
+Name,"Nieminen, Miss. Manta Josefina",1,1.0,
+Name,"O'Connor, Mr. Patrick",1,0.0,0.0
+Name,"Olsen, Master. Artur Karl",1,1.0,
+Name,"Omont, Mr. Alfred Fernand",1,0.0,0.0
+Name,"Oreskovic, Miss. Jelka",1,1.0,
+Name,"Ovies y Rodriguez, Mr. Servando",1,0.0,0.0
+Name,"Pallas y Castello, Mr. Emilio",1,0.0,0.0
+Name,"Pearce, Mr. Ernest",1,1.0,
+Name,"Pedersen, Mr. Olaf",1,1.0,
+Name,"Peltomaki, Mr. Nikolai Johannes",1,1.0,
+Name,"Petersen, Mr. Marius",1,1.0,
+Name,"Quick, Miss. Winifred Vera",1,1.0,
+Name,"Rasmussen, Mrs. (Lena Jacobsen Solvang)",1,1.0,
+Name,"Rheims, Mr. George Alexander Lucien",1,1.0,
+Name,"Riihivouri, Miss. Susanna Juhantytar Sanni""""",1,1.0,
+Name,"Riordan, Miss. Johanna Hannah""""",1,0.0,0.0
+Name,"Rosenbaum, Miss. Edith Louise",1,0.0,0.0
+Name,"Rowe, Mr. Alfred G",1,1.0,
+Name,"Ryerson, Mr. Arthur Larned",1,1.0,0.0
+Name,"Saether, Mr. Simon Sivertsen",1,1.0,
+Name,"Sage, Mrs. John (Annie Bullen)",1,1.0,
+Name,"Salander, Mr. Karl Johan",1,1.0,
+Name,"Shaughnessy, Mr. Patrick",1,0.0,0.0
+Name,"Shine, Miss. Ellen Natalia",1,0.0,0.0
+Name,"Snyder, Mr. John Pillsbury",1,1.0,
+Name,"Storey, Mr. Thomas",1,1.0,
+Name,"Strilic, Mr. Ivan",1,1.0,
+Name,"Swane, Mr. George",1,1.0,
+Name,"Thomas, Mr. Tannous",1,0.0,0.0
+Name,"Vander Planke, Mr. Julius",1,1.0,
+Name,"Vartanian, Mr. David",1,0.0,0.0
+Name,"Veal, Mr. James",1,1.0,
+Name,"Ware, Mr. Frederick",1,1.0,
+Name,"Warren, Mr. Charles William",1,1.0,
+Name,"Warren, Mr. Frank Manley",1,0.0,0.0
+Name,"Weisz, Mr. Leopold",1,1.0,
+Name,"Wells, Master. Ralph Lester",1,1.0,
+Name,"Whabee, Mrs. George Joseph (Shawneene Abi-Saab)",1,0.0,0.0
+Name,"Widener, Mr. George Dunton",1,1.0,0.0
+Name,"Willard, Miss. Constance",1,1.0,
+Name,"Wilson, Miss. Helen Alice",1,1.0,0.0
+Name,"Wirz, Mr. Albert",1,1.0,
+Name,"de Brito, Mr. Jose Joaquim",1,1.0,
+Name,"del Carlo, Mrs. Sebastiano (Argenia Genovesi)",1,0.0,0.0
+Name,"van Billiard, Master. James William",1,1.0,
+Name,"van Billiard, Master. Walter John",1,1.0,
+Sex,male,75,0.7866666666666666,
+Sex,female,51,0.5294117647058824,
+Ticket,113503,2,1.0,0.0
+Ticket,A/5. 851,2,1.0,
+Ticket,PC 17608,2,1.0,0.0
+Ticket,110813,1,0.0,0.0
+Ticket,112051,1,1.0,
+Ticket,112378,1,1.0,0.0
+Ticket,113038,1,1.0,
+Ticket,113044,1,1.0,
+Ticket,113773,1,1.0,
+Ticket,113781,1,0.0,
+Ticket,113790,1,1.0,
+Ticket,113795,1,1.0,
+Ticket,11753,1,1.0,
+Ticket,11813,1,0.0,0.0
+Ticket,13050,1,1.0,0.0
+Ticket,16966,1,1.0,0.0
+Ticket,17475,1,1.0,
+Ticket,21228,1,1.0,
+Ticket,220845,1,1.0,
+Ticket,228414,1,1.0,
+Ticket,237249,1,1.0,
+Ticket,237735,1,0.0,0.0
+Ticket,244360,1,1.0,
+Ticket,244368,1,1.0,
+Ticket,248726,1,1.0,
+Ticket,248734,1,1.0,
+Ticket,26360,1,1.0,
+Ticket,2652,1,0.0,0.0
+Ticket,2653,1,0.0,0.0
+Ticket,2658,1,0.0,0.0
+Ticket,2660,1,0.0,0.0
+Ticket,2678,1,0.0,0.0
+Ticket,2679,1,0.0,0.0
+Ticket,2684,1,0.0,0.0
+Ticket,2688,1,0.0,0.0
+Ticket,2692,1,0.0,0.0
+Ticket,28034,1,1.0,
+Ticket,28133,1,1.0,
+Ticket,28221,1,1.0,
+Ticket,28664,1,1.0,
+Ticket,29103,1,1.0,
+Ticket,29107,1,1.0,
+Ticket,3101295,1,1.0,
+Ticket,3101297,1,1.0,
+Ticket,3101298,1,1.0,
+Ticket,315083,1,1.0,
+Ticket,315085,1,1.0,
+Ticket,315153,1,1.0,
+Ticket,315154,1,1.0,
+Ticket,330844,1,0.0,0.0
+Ticket,330963,1,0.0,0.0
+Ticket,330968,1,0.0,0.0
+Ticket,334914,1,0.0,0.0
+Ticket,334915,1,0.0,0.0
+Ticket,33638,1,1.0,
+Ticket,342441,1,1.0,
+Ticket,343271,1,1.0,
+Ticket,345498,1,1.0,
+Ticket,345501,1,1.0,
+Ticket,345763,1,1.0,
+Ticket,3470,1,1.0,
+Ticket,347072,1,1.0,
+Ticket,347075,1,1.0,
+Ticket,347077,1,1.0,
+Ticket,347090,1,1.0,
+Ticket,349202,1,1.0,
+Ticket,349235,1,1.0,
+Ticket,349250,1,1.0,
+Ticket,349911,1,1.0,
+Ticket,350026,1,1.0,
+Ticket,350054,1,1.0,
+Ticket,350408,1,1.0,
+Ticket,359306,1,1.0,
+Ticket,359309,1,1.0,
+Ticket,364859,1,0.0,0.0
+Ticket,365237,1,0.0,0.0
+Ticket,366713,1,0.0,0.0
+Ticket,36928,1,0.0,
+Ticket,3701,1,1.0,
+Ticket,370368,1,0.0,0.0
+Ticket,370374,1,0.0,0.0
+Ticket,371109,1,0.0,0.0
+Ticket,382650,1,0.0,0.0
+Ticket,382653,1,0.0,0.0
+Ticket,383123,1,0.0,0.0
+Ticket,386525,1,1.0,
+Ticket,392091,1,1.0,
+Ticket,65305,1,1.0,
+Ticket,680,1,1.0,
+Ticket,7266,1,1.0,
+Ticket,A/4 31416,1,1.0,
+Ticket,A/4 48873,1,1.0,
+Ticket,A/5 1478,1,1.0,
+Ticket,C 17368,1,1.0,
+Ticket,C.A. 31029,1,1.0,
+Ticket,C.A. 33112,1,1.0,
+Ticket,C.A. 34050,1,1.0,
+Ticket,C.A. 37671,1,1.0,
+Ticket,C.A. 49867,1,1.0,
+Ticket,CA. 2343,1,1.0,
+Ticket,F.C. 12998,1,0.0,0.0
+Ticket,F.C.C. 13534,1,1.0,
+Ticket,PC 17483,1,0.0,
+Ticket,PC 17531,1,0.0,0.0
+Ticket,PC 17558,1,1.0,0.0
+Ticket,PC 17562,1,0.0,0.0
+Ticket,PC 17591,1,0.0,0.0
+Ticket,PC 17592,1,1.0,
+Ticket,PC 17599,1,0.0,0.0
+Ticket,PC 17607,1,1.0,
+Ticket,PC 17613,1,0.0,0.0
+Ticket,PC 17759,1,0.0,0.0
+Ticket,PC 17761,1,0.0,0.0
+Ticket,S.C./PARIS 2079,1,0.0,0.0
+Ticket,S.O.C. 14879,1,1.0,
+Ticket,SC/PARIS 2147,1,0.0,0.0
+Ticket,SC/PARIS 2167,1,0.0,0.0
+Ticket,SOTON/O.Q. 3101262,1,1.0,
+Ticket,SOTON/O.Q. 3101314,1,1.0,
+Ticket,SOTON/OQ 392083,1,1.0,
+Ticket,STON/O 2. 3101268,1,1.0,
+Ticket,STON/O 2. 3101291,1,1.0,
+Ticket,STON/O2. 3101270,1,1.0,

@@ -1,0 +1,19 @@
+pandas==2.2.3
+numpy==1.26.4
+matplotlib==3.10.5
+scikit-learn==1.7.1
+scipy==1.16.1
+statsmodels==0.14.5
+pydantic==2.11.0
+pydantic-core>=2.27.2
+jinja2==3.1.4
+markdown==3.6
+loguru==0.7.2
+tqdm==4.66.4
+pyyaml==6.0.1
+# LLM用（どれかに合わせて後で調整）
+openai>=1.0.0
+streamlit==1.35.0
+python-dotenv==1.0.1
+anthropic>=0.34.0
+python-dotenv==1.0.1
