@@ -252,15 +252,18 @@ if __name__ == "__main__" and os.getenv("CLI","0") == "1":
     result = train_candidates(df, task, ycol)
     print("Modeling:", json.dumps(result, ensure_ascii=False))
     if has_llm:
-        from src.agents.model_agent import reflect_and_improve
-        from src.runners.code_runner import run_python
-        for _ in range(2):
-            steps2 = reflect_and_improve(llm, json.dumps(result, ensure_ascii=False))
-            if not steps2:
-                break
-            for s in steps2:
-                if s.get("action")=="python":
-                    run_python(s.get("code",""), input_csv=csv)
-            df = pd.read_csv(csv)
-            result = train_candidates(df, task, ycol)
+        try:
+            from src.agents.model_agent import reflect_and_improve
+            from src.runners.code_runner import run_python
+            for _ in range(2):
+                steps2 = reflect_and_improve(llm, json.dumps(result, ensure_ascii=False))
+                if not steps2:
+                    break
+                for s in steps2:
+                    if s.get("action")=="python":
+                        run_python(s.get("code",""), input_csv=csv)
+                df = pd.read_csv(csv)
+                result = train_candidates(df, task, ycol)
+        except Exception:
+            pass
     open("data/artifacts/model_scores.json","w",encoding="utf-8").write(json.dumps(result, ensure_ascii=False, indent=2))

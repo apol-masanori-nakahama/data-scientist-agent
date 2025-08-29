@@ -28,14 +28,22 @@ class LLMClient:
         self._client: Any = None
         if self.provider == "openai":
             try:
-                from openai import OpenAI
-                self._client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+                key = os.getenv("OPENAI_API_KEY")
+                if not key:
+                    self._client = None
+                else:
+                    from openai import OpenAI
+                    self._client = OpenAI(api_key=key)
             except Exception:
                 self._client = None
         elif self.provider == "anthropic":
             try:
-                import anthropic
-                self._client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY"))
+                key = os.getenv("ANTHROPIC_API_KEY")
+                if not key:
+                    self._client = None
+                else:
+                    import anthropic
+                    self._client = anthropic.Anthropic(api_key=key)
             except Exception:
                 self._client = None
 
