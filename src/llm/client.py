@@ -42,11 +42,13 @@ class LLMClient:
     def chat(self, messages: List[Dict[str, str]], tools: Any = None, tool_choice: Any = None) -> str:
         if self._client is None:
             raise RuntimeError("LLM client not available")
+        max_tokens = int(os.getenv("LLM_MAX_TOKENS", "4096"))
         if self.provider == "openai":
             resp = cast(Any, self._client).chat.completions.create(  # type: ignore[reportUnknownMemberType]
                 model=self.model,
                 messages=messages,
                 temperature=self.temperature,
+                max_tokens=max_tokens,
                 tools=tools,
                 tool_choice=tool_choice
             )
@@ -57,7 +59,7 @@ class LLMClient:
             user_messages = [m for m in messages if m["role"]!="system"]
             resp = cast(Any, self._client).messages.create(  # type: ignore[reportUnknownMemberType]
                 model=self.model,
-                max_tokens=1024,
+                max_tokens=max_tokens,
                 temperature=self.temperature,
                 system=sys_prompt,
                 messages=[{"role": m["role"], "content": m["content"]} for m in user_messages]
