@@ -48,9 +48,13 @@ pip install -r requirements.txt
 
 > 実行イメージ。以下はモデル可視化と LLM 洞察の例です。
 
-![Modeling Figures (inline)](docs/screenshots/modeling_figures_inline.png)
+<p align="center">
+  <img src="docs/screenshots/modeling_figures_inline.png" alt="Modeling Figures (inline)" width="800"/>
+</p>
 
-![Insights (LLM)](docs/screenshots/insights_llm.png)
+<p align="center">
+  <img src="docs/screenshots/insights_llm.png" alt="Insights (LLM)" width="800"/>
+</p>
 
 ### CLI
 ```bash
