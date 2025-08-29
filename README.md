@@ -44,6 +44,14 @@ pip install -r requirements.txt
 - ブラウザで `http://localhost:8501` を開く
 - UI ではサイドバーで CSV をアップロード、またはサンプルデータを生成して体験できます
 
+#### スクリーンショット（UI）
+
+> 実行イメージ。以下はモデル可視化と LLM 洞察の例です。
+
+![Modeling Figures (inline)](docs/screenshots/modeling_figures_inline.png)
+
+![Insights (LLM)](docs/screenshots/insights_llm.png)
+
 ### CLI
 ```bash
 CLI=1 FAST_TEST=1 NO_MULTIPROC=1 python app.py /絶対パス/your.csv
