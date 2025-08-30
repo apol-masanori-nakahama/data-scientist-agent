@@ -21,6 +21,7 @@ class AppConfig:
     no_multiproc: bool
     s3_bucket: str | None
     s3_prefix: str
+    insight_rounds: int
 
     @staticmethod
     def load() -> "AppConfig":
@@ -34,6 +35,6 @@ class AppConfig:
             no_multiproc=_get_bool("NO_MULTIPROC", False),
             s3_bucket=os.getenv("S3_BUCKET"),
             s3_prefix=os.getenv("S3_PREFIX", "data-scientist-agent/"),
+            insight_rounds=int(os.getenv("INSIGHT_ROUNDS", "3")),
         )
-
 

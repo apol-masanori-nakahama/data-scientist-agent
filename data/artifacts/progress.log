@@ -1,0 +1,80 @@
+{"timestamp": "2025-08-30T03:53:10.899503+00:00", "phase": "EDA初期分析", "sub_phase": "", "progress": 0.0, "status": "running", "message": "データの基本的な探索を開始します", "eta_sec": null}
+{"timestamp": "2025-08-30T03:53:35.426570+00:00", "phase": "EDA初期分析", "sub_phase": "", "progress": 0.0, "status": "running", "message": "", "eta_sec": null}
+{"timestamp": "2025-08-30T03:53:35.426894+00:00", "phase": "EDA初期分析", "sub_phase": "python: \nimport pandas as pd\ndf = pd.read_csv(INPUT_CSV)\np...", "progress": 0.1111111111111111, "status": "running", "message": "", "eta_sec": 0.04295921325683594}
+{"timestamp": "2025-08-30T03:53:35.703596+00:00", "phase": "EDA初期分析", "sub_phase": "", "progress": 0.2222222222222222, "status": "running", "message": "", "eta_sec": 1.9366765022277832}
+{"timestamp": "2025-08-30T03:53:35.704532+00:00", "phase": "EDA初期分析", "sub_phase": "python: import pandas as pd", "progress": 0.3333333333333333, "status": "running", "message": "ステップ 1/9", "eta_sec": 0.8321070671081543}
+{"timestamp": "2025-08-30T03:53:35.704769+00:00", "phase": "EDA初期分析", "sub_phase": "python: \nimport pandas as pd\ndf = pd.read_csv(INPUT_CSV)\nm...", "progress": 0.4444444444444444, "status": "running", "message": "ステップ 1/9", "eta_sec": 0.46307484308878577}
+{"timestamp": "2025-08-30T03:53:35.969580+00:00", "phase": "EDA初期分析", "sub_phase": "", "progress": 0.5555555555555556, "status": "running", "message": "ステップ 1/9", "eta_sec": 0.5389018058776855}
+{"timestamp": "2025-08-30T03:53:35.970132+00:00", "phase": "EDA初期分析", "sub_phase": "python: import pandas as pd", "progress": 0.6666666666666666, "status": "running", "message": "ステップ 2/9", "eta_sec": 0.32593789100646975}
+{"timestamp": "2025-08-30T03:53:35.970287+00:00", "phase": "EDA初期分析", "sub_phase": "python: \nimport pandas as pd, matplotlib.pyplot as plt\ndf ...", "progress": 0.7777777777777778, "status": "running", "message": "ステップ 2/9", "eta_sec": 0.18112969398498535}
+{"timestamp": "2025-08-30T03:53:36.453822+00:00", "phase": "EDA初期分析", "sub_phase": "", "progress": 0.8888888888888888, "status": "running", "message": "ステップ 2/9", "eta_sec": 0.14669830458504812}
+{"timestamp": "2025-08-30T03:53:36.454908+00:00", "phase": "EDA初期分析", "sub_phase": "python: import pandas as pd, matplotlib.pyplot as plt", "progress": 1.0, "status": "running", "message": "ステップ 3/9", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T03:53:36.455164+00:00", "phase": "EDA初期分析", "sub_phase": "python: \nimport pandas as pd, matplotlib.pyplot as plt\ndf ...", "progress": 1.0, "status": "running", "message": "ステップ 3/9", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T03:53:36.928043+00:00", "phase": "EDA初期分析", "sub_phase": "", "progress": 1.0, "status": "running", "message": "ステップ 3/9", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T03:53:36.928477+00:00", "phase": "EDA初期分析", "sub_phase": "python: import pandas as pd, matplotlib.pyplot as plt", "progress": 1.0, "status": "running", "message": "ステップ 4/9", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T03:53:36.928626+00:00", "phase": "EDA初期分析", "sub_phase": "python: \nimport pandas as pd, matplotlib.pyplot as plt\ndf ...", "progress": 1.0, "status": "running", "message": "ステップ 4/9", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T03:53:37.424117+00:00", "phase": "EDA初期分析", "sub_phase": "", "progress": 1.0, "status": "running", "message": "ステップ 4/9", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T03:53:37.424766+00:00", "phase": "EDA初期分析", "sub_phase": "python: import pandas as pd, matplotlib.pyplot as plt", "progress": 1.0, "status": "running", "message": "ステップ 5/9", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T03:53:37.425038+00:00", "phase": "EDA初期分析", "sub_phase": "python: \nimport pandas as pd, matplotlib.pyplot as plt\ndf ...", "progress": 1.0, "status": "running", "message": "ステップ 5/9", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T03:53:37.904422+00:00", "phase": "EDA初期分析", "sub_phase": "", "progress": 1.0, "status": "running", "message": "ステップ 5/9", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T03:53:37.905043+00:00", "phase": "EDA初期分析", "sub_phase": "python: import pandas as pd, matplotlib.pyplot as plt", "progress": 1.0, "status": "running", "message": "ステップ 6/9", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T03:53:37.905194+00:00", "phase": "EDA初期分析", "sub_phase": "python: \nimport pandas as pd, matplotlib.pyplot as plt\ndf ...", "progress": 1.0, "status": "running", "message": "ステップ 6/9", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T03:53:38.384575+00:00", "phase": "EDA初期分析", "sub_phase": "", "progress": 1.0, "status": "running", "message": "ステップ 6/9", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T03:53:38.385264+00:00", "phase": "EDA初期分析", "sub_phase": "python: import pandas as pd, matplotlib.pyplot as plt", "progress": 1.0, "status": "running", "message": "ステップ 7/9", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T03:53:38.385576+00:00", "phase": "EDA初期分析", "sub_phase": "python: \nimport pandas as pd\ndf = pd.read_csv(INPUT_CSV)\nd...", "progress": 1.0, "status": "running", "message": "ステップ 7/9", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T03:53:38.675697+00:00", "phase": "EDA初期分析", "sub_phase": "", "progress": 1.0, "status": "running", "message": "ステップ 7/9", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T03:53:38.676180+00:00", "phase": "EDA初期分析", "sub_phase": "python: import pandas as pd", "progress": 1.0, "status": "running", "message": "ステップ 8/9", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T03:53:38.676346+00:00", "phase": "EDA初期分析", "sub_phase": "note: Saved dtypes, missingness, and histograms for up t...", "progress": 1.0, "status": "running", "message": "ステップ 8/9", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T03:53:38.676849+00:00", "phase": "EDA初期分析", "sub_phase": "note: Saved dtypes, missingness, and histograms for up t", "progress": 1.0, "status": "running", "message": "ステップ 9/9", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T03:53:38.677249+00:00", "phase": "EDA初期分析", "sub_phase": "note: Saved dtypes, missingness, and histograms for up t", "progress": 1.0, "status": "completed", "message": "EDA初期分析完了", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T03:53:38.677410+00:00", "phase": "EDA改善 ラウンド1", "sub_phase": "", "progress": 0.0, "status": "running", "message": "分析結果を改善します（1/2）", "eta_sec": null}
+{"timestamp": "2025-08-30T03:53:56.358599+00:00", "phase": "EDA改善 ラウンド1", "sub_phase": "", "progress": 0.0, "status": "running", "message": "", "eta_sec": null}
+{"timestamp": "2025-08-30T03:53:56.359375+00:00", "phase": "EDA改善 ラウンド1", "sub_phase": "stop: planning_error...", "progress": 1.0, "status": "running", "message": "", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T03:53:56.360130+00:00", "phase": "EDA改善 ラウンド1", "sub_phase": "stop: planning_error", "progress": 1.0, "status": "running", "message": "ステップ 1/1", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T03:53:56.360378+00:00", "phase": "EDA改善 ラウンド1", "sub_phase": "stop: planning_error", "progress": 1.0, "status": "completed", "message": "EDA改善 ラウンド1完了", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T03:53:56.360572+00:00", "phase": "EDA改善 ラウンド2", "sub_phase": "", "progress": 0.0, "status": "running", "message": "分析結果を改善します（2/2）", "eta_sec": null}
+{"timestamp": "2025-08-30T03:54:14.676083+00:00", "phase": "EDA改善 ラウンド2", "sub_phase": "", "progress": 0.0, "status": "running", "message": "", "eta_sec": null}
+{"timestamp": "2025-08-30T03:54:14.676816+00:00", "phase": "EDA改善 ラウンド2", "sub_phase": "stop: planning_error...", "progress": 1.0, "status": "running", "message": "", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T03:54:14.677742+00:00", "phase": "EDA改善 ラウンド2", "sub_phase": "stop: planning_error", "progress": 1.0, "status": "running", "message": "ステップ 1/1", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T03:54:14.678297+00:00", "phase": "EDA改善 ラウンド2", "sub_phase": "stop: planning_error", "progress": 1.0, "status": "completed", "message": "EDA改善 ラウンド2完了", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T03:54:14.678580+00:00", "phase": "EDA改善 ラウンド2", "sub_phase": "stop: planning_error", "progress": 1.0, "status": "completed", "message": "EDA分析完了", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T22:37:35.927311+00:00", "phase": "EDA初期分析", "sub_phase": "", "progress": 0.0, "status": "running", "message": "データの基本的な探索を開始します", "eta_sec": null}
+{"timestamp": "2025-08-30T22:37:59.161730+00:00", "phase": "EDA初期分析", "sub_phase": "", "progress": 0.0, "status": "running", "message": "", "eta_sec": null}
+{"timestamp": "2025-08-30T22:37:59.162737+00:00", "phase": "EDA初期分析", "sub_phase": "python: \nimport pandas as pd\ndf = pd.read_csv(INPUT_CSV)\np...", "progress": 0.1111111111111111, "status": "running", "message": "", "eta_sec": 0.12033462524414062}
+{"timestamp": "2025-08-30T22:37:59.617003+00:00", "phase": "EDA初期分析", "sub_phase": "", "progress": 0.2222222222222222, "status": "running", "message": "", "eta_sec": 3.1797072887420654}
+{"timestamp": "2025-08-30T22:37:59.617943+00:00", "phase": "EDA初期分析", "sub_phase": "python: import pandas as pd", "progress": 0.3333333333333333, "status": "running", "message": "ステップ 1/9", "eta_sec": 1.3649611473083496}
+{"timestamp": "2025-08-30T22:37:59.618148+00:00", "phase": "EDA初期分析", "sub_phase": "python: \nimport pandas as pd\ndf = pd.read_csv(INPUT_CSV)\nm...", "progress": 0.4444444444444444, "status": "running", "message": "ステップ 1/9", "eta_sec": 0.7590099175771077}
+{"timestamp": "2025-08-30T22:37:59.924627+00:00", "phase": "EDA初期分析", "sub_phase": "", "progress": 0.5555555555555556, "status": "running", "message": "ステップ 1/9", "eta_sec": 0.7574129104614258}
+{"timestamp": "2025-08-30T22:37:59.925130+00:00", "phase": "EDA初期分析", "sub_phase": "python: import pandas as pd", "progress": 0.6666666666666666, "status": "running", "message": "ステップ 2/9", "eta_sec": 0.4574350833892822}
+{"timestamp": "2025-08-30T22:37:59.925306+00:00", "phase": "EDA初期分析", "sub_phase": "python: \nimport pandas as pd, matplotlib.pyplot as plt\ndf ...", "progress": 0.7777777777777778, "status": "running", "message": "ステップ 2/9", "eta_sec": 0.2541906038920085}
+{"timestamp": "2025-08-30T22:38:02.297305+00:00", "phase": "EDA初期分析", "sub_phase": "", "progress": 0.8888888888888888, "status": "running", "message": "ステップ 2/9", "eta_sec": 0.4470353126525879}
+{"timestamp": "2025-08-30T22:38:02.298042+00:00", "phase": "EDA初期分析", "sub_phase": "python: import pandas as pd, matplotlib.pyplot as plt", "progress": 1.0, "status": "running", "message": "ステップ 3/9", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T22:38:02.298213+00:00", "phase": "EDA初期分析", "sub_phase": "python: \nimport pandas as pd, matplotlib.pyplot as plt\ndf ...", "progress": 1.0, "status": "running", "message": "ステップ 3/9", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T22:38:02.752638+00:00", "phase": "EDA初期分析", "sub_phase": "", "progress": 1.0, "status": "running", "message": "ステップ 3/9", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T22:38:02.753335+00:00", "phase": "EDA初期分析", "sub_phase": "python: import pandas as pd, matplotlib.pyplot as plt", "progress": 1.0, "status": "running", "message": "ステップ 4/9", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T22:38:02.753490+00:00", "phase": "EDA初期分析", "sub_phase": "python: \nimport pandas as pd, matplotlib.pyplot as plt\ndf ...", "progress": 1.0, "status": "running", "message": "ステップ 4/9", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T22:38:03.237345+00:00", "phase": "EDA初期分析", "sub_phase": "", "progress": 1.0, "status": "running", "message": "ステップ 4/9", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T22:38:03.237866+00:00", "phase": "EDA初期分析", "sub_phase": "python: import pandas as pd, matplotlib.pyplot as plt", "progress": 1.0, "status": "running", "message": "ステップ 5/9", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T22:38:03.238010+00:00", "phase": "EDA初期分析", "sub_phase": "python: \nimport pandas as pd, matplotlib.pyplot as plt\ndf ...", "progress": 1.0, "status": "running", "message": "ステップ 5/9", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T22:38:03.783078+00:00", "phase": "EDA初期分析", "sub_phase": "", "progress": 1.0, "status": "running", "message": "ステップ 5/9", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T22:38:03.784041+00:00", "phase": "EDA初期分析", "sub_phase": "python: import pandas as pd, matplotlib.pyplot as plt", "progress": 1.0, "status": "running", "message": "ステップ 6/9", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T22:38:03.784156+00:00", "phase": "EDA初期分析", "sub_phase": "python: \nimport pandas as pd, matplotlib.pyplot as plt\ndf ...", "progress": 1.0, "status": "running", "message": "ステップ 6/9", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T22:38:04.267233+00:00", "phase": "EDA初期分析", "sub_phase": "", "progress": 1.0, "status": "running", "message": "ステップ 6/9", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T22:38:04.267617+00:00", "phase": "EDA初期分析", "sub_phase": "python: import pandas as pd, matplotlib.pyplot as plt", "progress": 1.0, "status": "running", "message": "ステップ 7/9", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T22:38:04.267727+00:00", "phase": "EDA初期分析", "sub_phase": "python: \nimport pandas as pd\ndf = pd.read_csv(INPUT_CSV)\nd...", "progress": 1.0, "status": "running", "message": "ステップ 7/9", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T22:38:04.564616+00:00", "phase": "EDA初期分析", "sub_phase": "", "progress": 1.0, "status": "running", "message": "ステップ 7/9", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T22:38:04.565721+00:00", "phase": "EDA初期分析", "sub_phase": "python: import pandas as pd", "progress": 1.0, "status": "running", "message": "ステップ 8/9", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T22:38:04.566043+00:00", "phase": "EDA初期分析", "sub_phase": "note: Saved dtypes, missingness, and histograms for up t...", "progress": 1.0, "status": "running", "message": "ステップ 8/9", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T22:38:04.566529+00:00", "phase": "EDA初期分析", "sub_phase": "note: Saved dtypes, missingness, and histograms for up t", "progress": 1.0, "status": "running", "message": "ステップ 9/9", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T22:38:04.566853+00:00", "phase": "EDA初期分析", "sub_phase": "note: Saved dtypes, missingness, and histograms for up t", "progress": 1.0, "status": "completed", "message": "EDA初期分析完了", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T22:38:04.566977+00:00", "phase": "EDA改善 ラウンド1", "sub_phase": "", "progress": 0.0, "status": "running", "message": "分析結果を改善します（1/2）", "eta_sec": null}
+{"timestamp": "2025-08-30T22:38:16.953677+00:00", "phase": "EDA改善 ラウンド1", "sub_phase": "", "progress": 0.0, "status": "running", "message": "", "eta_sec": null}
+{"timestamp": "2025-08-30T22:38:16.954398+00:00", "phase": "EDA改善 ラウンド1", "sub_phase": "stop: planning_error...", "progress": 1.0, "status": "running", "message": "", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T22:38:16.955234+00:00", "phase": "EDA改善 ラウンド1", "sub_phase": "stop: planning_error", "progress": 1.0, "status": "running", "message": "ステップ 1/1", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T22:38:16.955473+00:00", "phase": "EDA改善 ラウンド1", "sub_phase": "stop: planning_error", "progress": 1.0, "status": "completed", "message": "EDA改善 ラウンド1完了", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T22:38:16.955680+00:00", "phase": "EDA改善 ラウンド2", "sub_phase": "", "progress": 0.0, "status": "running", "message": "分析結果を改善します（2/2）", "eta_sec": null}
+{"timestamp": "2025-08-30T22:38:41.015866+00:00", "phase": "EDA改善 ラウンド2", "sub_phase": "", "progress": 0.0, "status": "running", "message": "", "eta_sec": null}
+{"timestamp": "2025-08-30T22:38:41.016523+00:00", "phase": "EDA改善 ラウンド2", "sub_phase": "stop: planning_error...", "progress": 1.0, "status": "running", "message": "", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T22:38:41.017275+00:00", "phase": "EDA改善 ラウンド2", "sub_phase": "stop: planning_error", "progress": 1.0, "status": "running", "message": "ステップ 1/1", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T22:38:41.017783+00:00", "phase": "EDA改善 ラウンド2", "sub_phase": "stop: planning_error", "progress": 1.0, "status": "completed", "message": "EDA改善 ラウンド2完了", "eta_sec": 0.0}
+{"timestamp": "2025-08-30T22:38:41.017994+00:00", "phase": "EDA改善 ラウンド2", "sub_phase": "stop: planning_error", "progress": 1.0, "status": "completed", "message": "EDA分析完了", "eta_sec": 0.0}

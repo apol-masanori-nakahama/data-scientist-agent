@@ -7,6 +7,7 @@ from src.planning.loop import execute_plan
 from src.agents.eda_agent import initial_eda_plan
 from src.planning.loop import next_eda_plan
 from src.reports.report import render_eda
+from src.utils.integrated_progress import get_global_progress_system, reset_global_progress_system
 try:
     import streamlit as st  # type: ignore[reportMissingImports]
 except Exception:
@@ -28,6 +29,19 @@ if st:
             up = st.file_uploader("CSVをアップロード", type=["csv"])
             sample = st.checkbox("サンプルデータで試す", value=False)
             run = st.button("実行")
+            # Insights ラウンド数（UIで制御）
+            try:
+                _def_rounds = int(os.getenv("INSIGHT_ROUNDS", "3"))
+            except Exception:
+                _def_rounds = 3
+            _opts = [1, 2, 3, 4, 5]
+            _idx = _opts.index(_def_rounds) if _def_rounds in _opts else _opts.index(3)
+            insight_rounds = st.selectbox(
+                "Insights ラウンド数",
+                _opts,
+                index=_idx,
+                help="LLM内省の反復回数（多いほど高品質だが遅くなります）",
+            )
             # LLM ステータスの可視化
             try:
                 _prov = os.getenv("LLM_PROVIDER", "anthropic")
@@ -75,25 +89,38 @@ if st and run and (up or sample):
     st.write("実行開始…")
     llm = LLMClient()
     log = RunLog(meta={"input_csv": csv_path})
+    
+    # 統合進捗システムの初期化
+    reset_global_progress_system()  # 前回の状態をクリア
+    progress_system = get_global_progress_system()
 
-    eda_tab, figs_tab, desc_tab, insights_tab, artifacts_tab = st.tabs(["Overview","Figures","Describe","Insights","Artifacts"])
+    # 統合進捗ダッシュボードをStreamlitに追加
+    progress_containers = progress_system.get_streamlit_containers()
+    
+    eda_tab, figs_tab, desc_tab, insights_tab, artifacts_tab, progress_tab = st.tabs(["Overview","Figures","Describe","Insights","Artifacts","進捗"])
 
     with st.status("EDA中...", expanded=True) as status:
         reflect_rounds_ui = 2
         phase_count = 1 + reflect_rounds_ui
         phase_idx = 0
+        
+        # EDA初期プラン
+        progress_system.start_phase("EDA初期分析", message="データの基本的な探索を開始します")
         steps = initial_eda_plan(llm)
+        
         prog = st.progress(0.0)
         logbox = st.empty()
         stagebox = st.empty()
         report_box = st.empty()
         total = max(1, len(steps))
+        
         def _on(idx, step, obs):
             # 各フェーズを同じ重みで進捗化
             local = (idx + 1) / max(1, total)
             overall = (phase_idx + local) / phase_count
             status.update(label=f"EDA中... {int(overall*100)}% (Phase {phase_idx+1}/{phase_count})")
             prog.progress(min(1.0, overall))
+            
             # ステージ表示（action とコード/ノート先頭）
             preview = (step.note or (step.code or "").strip().splitlines()[0:1])
             if isinstance(preview, list):
@@ -109,13 +136,28 @@ if st and run and (up or sample):
                 "stdout": obs.stdout[-400:],
                 "stderr": obs.stderr[-400:]
             })
-        log = execute_plan(steps, csv_path, log, on_step=_on)
+            
+            # 統合進捗システムに情報を送信
+            step_name = f"{step.action}: {(preview or '')[:50]}"
+            progress_system.update_step(step_name, f"ステップ {idx+1}/{total}")
+        
+        log = execute_plan(steps, csv_path, log, on_step=_on, 
+                          progress_manager=progress_system.progress_manager, 
+                          phase_name="EDA初期分析")
+        
         phase_idx += 1
+        
+        # 反省・改善フェーズ
         for i in range(reflect_rounds_ui):
+            progress_system.start_phase(f"EDA改善 ラウンド{i+1}", message=f"分析結果を改善します（{i+1}/{reflect_rounds_ui}）")
             steps = next_eda_plan(llm, log)
             total = max(1, len(steps))
-            log = execute_plan(steps, csv_path, log, on_step=_on)
+            log = execute_plan(steps, csv_path, log, on_step=_on,
+                              progress_manager=progress_system.progress_manager,
+                              phase_name=f"EDA改善 ラウンド{i+1}")
             phase_idx += 1
+        
+        progress_system.complete_phase("EDA分析完了")
         md = render_eda(csv_path)
         with eda_tab:
             st.subheader("レポート")
@@ -281,19 +323,114 @@ if st and run and (up or sample):
                         except Exception:
                             pass
                 _ins = ""
-                has_llm_ui = llm.is_ready(deep=False)
+                has_llm_ui = (llm is not None) and (getattr(llm, '_client', None) is not None)
+                # Prepare Overview tab placeholders so users see insights without switching tabs
+                with eda_tab:
+                    st.subheader('Insights (LLM)')
+                    _draft_box_ov = st.empty()
+                    _ov_prog = st.progress(0.0)
+                    _ov_log = st.empty()
+                    _ov_eta = st.empty()
                 with insights_tab:
                     st.subheader('Insights (LLM)')
+                    # Show intermediate drafts while generating (Insights tab)
+                    _draft_box = st.empty()
                     if has_llm_ui:
                         with st.status("Insights 生成中...", expanded=True):
                             iprog = st.progress(0.0)
                             ilog = st.empty()
+                            _eta_box = st.empty()
+                            _round_start: dict[int, float] = {}
+                            _round_times: dict[int, float] = {}
+                            stream_accum = [""]
                             def _ipcb(round_idx: int, total: int) -> None:
-                                frac = min(1.0, max(0.0, round_idx/float(total)))
+                                # Called at the start of each round
+                                frac = min(1.0, max(0.0, (round_idx-1)/float(total)))
                                 iprog.progress(frac)
-                                ilog.write({"round": f"{round_idx}/{total}", "status": "calling LLM"})
+                                # Mirror to Overview tab
+                                try:
+                                    _ov_prog.progress(frac)
+                                except Exception:
+                                    pass
+                                _round_start[round_idx] = time.time()
+                                ilog.write({
+                                    "round": f"{round_idx}/{total}",
+                                    "status": "calling LLM",
+                                    "started_at": time.strftime('%H:%M:%S')
+                                })
+                                try:
+                                    _ov_log.write({
+                                        "round": f"{round_idx}/{total}",
+                                        "status": "calling LLM",
+                                        "started_at": time.strftime('%H:%M:%S')
+                                    })
+                                except Exception:
+                                    pass
+                                # ETA based on previous rounds (if any)
+                                if _round_times:
+                                    avg = sum(_round_times.values())/len(_round_times)
+                                    rem = max(0, total - (round_idx-1))
+                                    _eta_box.info(f"ETA 約 {int(avg*rem)} 秒（平均 {avg:.1f}s/ラウンド）")
+                                    try:
+                                        _ov_eta.info(f"ETA 約 {int(avg*rem)} 秒（平均 {avg:.1f}s/ラウンド）")
+                                    except Exception:
+                                        pass
+                                else:
+                                    _eta_box.caption("ETA 計測中…（最初のラウンド完了後に推定）")
+                                    try:
+                                        _ov_eta.caption("ETA 計測中…（最初のラウンド完了後に推定）")
+                                    except Exception:
+                                        pass
+                            def _idcb(draft_text: str, round_idx: int, total: int) -> None:
+                                # Stream the evolving draft so users can see progress
+                                _draft_box.markdown(draft_text or '')
+                                try:
+                                    _draft_box_ov.markdown(draft_text or '')
+                                except Exception:
+                                    pass
+                                # Round finished timing and ETA update
+                                stt = _round_start.get(round_idx, time.time())
+                                dur = max(0.0, time.time() - stt)
+                                _round_times[round_idx] = dur
+                                ilog.write({
+                                    "round": f"{round_idx}/{total}",
+                                    "status": "round finished",
+                                    "duration_sec": f"{dur:.1f}",
+                                })
+                                try:
+                                    _ov_log.write({
+                                        "round": f"{round_idx}/{total}",
+                                        "status": "round finished",
+                                        "duration_sec": f"{dur:.1f}",
+                                    })
+                                except Exception:
+                                    pass
+                                avg = sum(_round_times.values())/len(_round_times)
+                                rem = max(0, total - round_idx)
+                                _eta_box.info(f"ETA 約 {int(avg*rem)} 秒（平均 {avg:.1f}s/ラウンド）")
+                                iprog.progress(min(1.0, round_idx/float(total)))
+                                try:
+                                    _ov_eta.info(f"ETA 約 {int(avg*rem)} 秒（平均 {avg:.1f}s/ラウンド）")
+                                    _ov_prog.progress(min(1.0, round_idx/float(total)))
+                                except Exception:
+                                    pass
+                                # Persist draft after each round as well
+                                try:
+                                    (art/f'insights_round_{round_idx}.md').write_text(draft_text or '', encoding='utf-8')
+                                    (art/'insights.md').write_text(draft_text or '', encoding='utf-8')
+                                except Exception:
+                                    pass
+                            def _istream(delta_text: str, round_idx: int, total: int) -> None:
+                                # Token/fragment-level streaming update (more granular than on_draft)
+                                stream_accum[0] += (delta_text or '')
+                                _draft_box.markdown(stream_accum[0])
+                                try:
+                                    _draft_box_ov.markdown(stream_accum[0])
+                                except Exception:
+                                    pass
                             from src.agents.explain import generate_insights
-                            _ins = generate_insights(llm, "\n\n".join(ctx_parts), rounds=5, progress=_ipcb)
+                            _rounds = insight_rounds if 'insight_rounds' in locals() and insight_rounds is not None else int(os.getenv("INSIGHT_ROUNDS", "3"))
+                            _ins = generate_insights(llm, "\n\n".join(ctx_parts), rounds=_rounds, progress=_ipcb, on_draft=_idcb, on_stream=_istream)
                             (art/'insights.md').write_text(_ins or '', encoding='utf-8')
                             ilog.write({"done": True})
                     else:
@@ -307,14 +444,24 @@ if st and run and (up or sample):
                         if not _ins.strip():
                             st.info('LLM が無効か未設定のため Insights は未生成です。OPENAI_API_KEY/ANTHROPIC_API_KEY と LLM_PROVIDER/LLM_MODEL を設定してください。')
                     if _ins.strip():
-                        st.markdown(_ins)
+                        _draft_box.markdown(_ins)
                         st.download_button('Insights Markdown', data=_ins.encode('utf-8'), file_name='insights.md')
+                # Also show final insights and download on Overview
+                if _ins.strip():
+                    with eda_tab:
+                        _draft_box_ov.markdown(_ins)
+                        st.download_button('Insights Markdown', data=_ins.encode('utf-8'), file_name='insights.md', key='dl_insights_overview')
 
                 # Reflect insights into follow-up improvements and re-train
                 try:
                     if has_llm_ui and _ins.strip():
                         from src.agents.model_agent import reflect_and_improve
                         from src.runners.code_runner import run_python as _run_py
+                        # Prepare Overview placeholders
+                        with eda_tab:
+                            st.subheader("示唆の反映と再学習")
+                            rprog_ov = st.progress(0.0)
+                            rlog_ov = st.empty()
                         with insights_tab:
                             st.subheader("示唆の反映と再学習")
                             rprog = st.progress(0.0)
@@ -323,9 +470,19 @@ if st and run and (up or sample):
                             if steps2:
                                 for si, _s in enumerate(steps2):
                                     if _s.get('action') == 'python':
-                                        rlog.write({"apply_step": si+1, "total": len(steps2)})
+                                        msg = {"apply_step": si+1, "total": len(steps2)}
+                                        rlog.write(msg)
+                                        try:
+                                            rlog_ov.write(msg)
+                                        except Exception:
+                                            pass
                                         _run_py(_s.get('code', ''), input_csv=csv_path)
-                                        rprog.progress((si+1)/len(steps2))
+                                        frac = (si+1)/len(steps2)
+                                        rprog.progress(frac)
+                                        try:
+                                            rprog_ov.progress(frac)
+                                        except Exception:
+                                            pass
                                 # Re-train after applying suggestions
                                 df2 = pd.read_csv(csv_path)
                                 res2 = train_candidates(df2, task, ycol)
@@ -384,9 +541,100 @@ if st and run and (up or sample):
         if (art/"model_scores.json").exists():
             st.download_button("Model Scores JSON", data=open(art/"model_scores.json","rb").read(), file_name="model_scores.json")
     
+    # 進捗タブの内容
+    with progress_tab:
+        st.subheader("🚀 リアルタイム進捗ダッシュボード")
+        
+        # 進捗概要
+        overall_status = progress_system.get_overall_status()
+        col1, col2, col3 = st.columns(3)
+        
+        with col1:
+            st.metric("現在のフェーズ", overall_status["current_phase"])
+        with col2:
+            progress_percent = int(overall_status["progress"]["current_state"]["progress"] * 100)
+            st.metric("進捗率", f"{progress_percent}%")
+        with col3:
+            st.metric("ステータス", overall_status["status"])
+        
+        # チェックポイント管理
+        st.subheader("💾 チェックポイント管理")
+        
+        col_cp1, col_cp2 = st.columns(2)
+        with col_cp1:
+            if st.button("手動チェックポイント作成"):
+                checkpoint_id = progress_system.save_checkpoint("手動作成")
+                if checkpoint_id:
+                    st.success(f"チェックポイント作成完了: {checkpoint_id}")
+                else:
+                    st.error("チェックポイント作成に失敗しました")
+        
+        with col_cp2:
+            checkpoints = progress_system.list_checkpoints()
+            if checkpoints:
+                checkpoint_names = [f"{cp.checkpoint_id} ({cp.description})" for cp in checkpoints]
+                selected_cp = st.selectbox("復元するチェックポイント", ["選択してください"] + checkpoint_names)
+                
+                if selected_cp != "選択してください" and selected_cp is not None:
+                    checkpoint_id = selected_cp.split(" (")[0]
+                    if st.button("復元実行"):
+                        if progress_system.restore_checkpoint(checkpoint_id):
+                            st.success("チェックポイント復元完了")
+                            st.experimental_rerun()
+                        else:
+                            st.error("チェックポイント復元に失敗しました")
+        
+        # 詳細進捗情報
+        st.subheader("📊 詳細進捗情報")
+        progress_details = overall_status["progress"]
+        st.json(progress_details)
+        
+        # システム設定
+        st.subheader("⚙️ システム設定")
+        with st.expander("進捗システム設定"):
+            st.write("**通知設定**")
+            st.code(f"""
+NOTIFICATION_EMAIL_ENABLED={os.getenv('NOTIFICATION_EMAIL_ENABLED', 'false')}
+NOTIFICATION_WEBHOOK_ENABLED={os.getenv('NOTIFICATION_WEBHOOK_ENABLED', 'false')}
+NOTIFICATION_DESKTOP_ENABLED={os.getenv('NOTIFICATION_DESKTOP_ENABLED', 'false')}
+            """)
+            
+            st.write("**チェックポイント設定**")
+            if "checkpoint_info" in overall_status:
+                cp_info = overall_status["checkpoint_info"]
+                st.write(f"保存済みチェックポイント: {cp_info['checkpoint_count']}個")
+                st.write(f"総サイズ: {cp_info['total_size_mb']:.1f}MB")
+                st.write(f"自動保存: {'有効' if cp_info['auto_save_enabled'] else '無効'}")
+                st.write(f"保存間隔: {cp_info['auto_save_interval']/60:.1f}分")
+        
+        # ログ表示
+        st.subheader("📝 進捗ログ")
+        log_file = Path("data/artifacts/progress.log")
+        if log_file.exists():
+            try:
+                with open(log_file, 'r', encoding='utf-8') as f:
+                    log_lines = f.readlines()[-20:]  # 最新20行
+                
+                log_text = "".join(log_lines)
+                st.code(log_text, language="text")
+            except Exception as e:
+                st.error(f"ログ読み込みエラー: {e}")
+        else:
+            st.info("ログファイルがまだ作成されていません")
+    
 if __name__ == "__main__" and os.getenv("CLI","0") == "1":
     csv = sys.argv[1] if len(sys.argv) > 1 else "data/sample.csv"
     log = RunLog(meta={"input_csv": csv})
+    
+    # CLI用の統合進捗システム初期化（Streamlit無効、コンソール出力有効）
+    from src.utils.integrated_progress import create_integrated_progress_system
+    cli_progress = create_integrated_progress_system(
+        enable_dashboard=False,  # CLI ではStreamlitダッシュボード無効
+        enable_notifications=True,
+        enable_checkpoints=True,
+        enable_console_output=True
+    )
+    
     try:
         llm = LLMClient()
     except Exception:
@@ -396,6 +644,8 @@ if __name__ == "__main__" and os.getenv("CLI","0") == "1":
     has_llm = bool(llm) and llm.is_ready(deep=False) and use_llm_cli
 
     # 1) 初期プラン実行（LLMなしならfew-shotにフォールバック）
+    cli_progress.start_phase("EDA初期分析", message="CLI モードでEDA分析を開始")
+    
     if has_llm:
         assert llm is not None
         steps = initial_eda_plan(llm)
@@ -408,16 +658,20 @@ if __name__ == "__main__" and os.getenv("CLI","0") == "1":
                 note=s.get("note")
             ) for s in EDA_FEWSHOT
         ]
-    # CLI 進捗表示（簡易）
+    
+    # CLI 進捗表示（簡易 + 統合進捗システム）
     phase_count = 1 + (2 if has_llm else 0)
     phase_idx = 0
     total = max(1, len(steps))
+    
     def _on_cli(idx, step, obs):
         local = (idx + 1) / max(1, total)
         overall = (phase_idx + local) / phase_count
         preview = step.note or (step.code or "").strip().splitlines()[0:1]
         if isinstance(preview, list):
             preview = preview[0] if preview else ""
+        
+        # 従来のJSON出力
         print(json.dumps({
             "event": "eda_step",
             "phase": f"{phase_idx+1}/{phase_count}",
@@ -427,43 +681,76 @@ if __name__ == "__main__" and os.getenv("CLI","0") == "1":
             "overall": round(overall, 3),
             "preview": (preview or "")[:120]
         }, ensure_ascii=False))
-    log = execute_plan(steps, csv, log, on_step=_on_cli)
+        
+        # 統合進捗システム更新
+        step_name = f"{step.action}: {(preview or '')[:50]}"
+        cli_progress.update_step(step_name, f"ステップ {idx+1}/{total}")
+    
+    log = execute_plan(steps, csv, log, on_step=_on_cli,
+                      progress_manager=cli_progress.progress_manager,
+                      phase_name="EDA初期分析")
 
     # 2) 反省→再計画を最大2回
-    for _ in range(2):
+    for i in range(2):
         if has_llm:
             assert llm is not None
+            cli_progress.start_phase(f"EDA改善 ラウンド{i+1}", message=f"分析結果を改善します（{i+1}/2）")
             steps = next_eda_plan(llm, log)
             total = max(1, len(steps))
             phase_idx += 1
-            log = execute_plan(steps, csv, log, on_step=_on_cli)
+            log = execute_plan(steps, csv, log, on_step=_on_cli,
+                              progress_manager=cli_progress.progress_manager,
+                              phase_name=f"EDA改善 ラウンド{i+1}")
             if any(s.action=="stop" for s in steps):
                 break
         else:
             break
+    
+    cli_progress.complete_phase("EDA分析完了")
 
     # 3) レポート化
     path = render_eda(csv)
     print(json.dumps({"report_md": path, "turns": len(log.turns)}, ensure_ascii=False))
     # 4) モデリング（CLI）
+    cli_progress.start_phase("モデリング", message="機械学習モデルの訓練を開始")
+    
     import pandas as pd  # type: ignore[reportMissingImports]
     df = pd.read_csv(csv)
     task, ycol = infer_task_and_target(df, hint=os.getenv("TARGET"))
-    result = train_candidates(df, task, ycol)
+    
+    def _model_progress(stage: str, frac: float):
+        cli_progress.update_step(stage, f"進捗: {int(frac*100)}%")
+    
+    result = train_candidates(df, task, ycol, progress=_model_progress)
     print("Modeling:", json.dumps(result, ensure_ascii=False))
+    
     if has_llm:
         try:
             from src.agents.model_agent import reflect_and_improve
             from src.runners.code_runner import run_python
-            for _ in range(2):
+            
+            for i in range(2):
+                cli_progress.start_phase(f"モデル改善 ラウンド{i+1}", message=f"モデルの性能改善を実行（{i+1}/2）")
                 steps2 = reflect_and_improve(llm, json.dumps(result, ensure_ascii=False))
                 if not steps2:
                     break
-                for s in steps2:
+                
+                for j, s in enumerate(steps2):
                     if s.get("action")=="python":
+                        cli_progress.update_step(f"改善コード実行 {j+1}/{len(steps2)}")
                         run_python(s.get("code",""), input_csv=csv)
+                
                 df = pd.read_csv(csv)
-                result = train_candidates(df, task, ycol)
-        except Exception:
-            pass
+                result = train_candidates(df, task, ycol, progress=_model_progress)
+        except Exception as e:
+            cli_progress.error_phase(f"モデル改善でエラー: {str(e)}")
+    
+    cli_progress.complete_phase("全処理完了")
     open("data/artifacts/model_scores.json","w",encoding="utf-8").write(json.dumps(result, ensure_ascii=False, indent=2))
+    
+    # 最終的な進捗サマリーを出力
+    print("\n" + "="*60)
+    print("🎉 処理完了サマリー")
+    print("="*60)
+    from src.utils.dashboard import print_dashboard_summary
+    print_dashboard_summary(cli_progress.progress_manager)

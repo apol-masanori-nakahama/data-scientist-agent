@@ -25,6 +25,7 @@ class AnalysisOptions:
 def run_analysis(csv_path: str, out_dir: str = "data/artifacts", use_llm: bool = True, options: AnalysisOptions | None = None) -> dict:
     options = options or AnalysisOptions()
     log = RunLog(meta={"input_csv": csv_path})
+    cfg = AppConfig.load()
 
     llm = None
     if use_llm:
@@ -66,7 +67,7 @@ def run_analysis(csv_path: str, out_dir: str = "data/artifacts", use_llm: bool =
                         ctx_parts.append(f"{name} (head):\n" + _pd.read_csv(p).head(20).to_string(index=False))
                     except Exception:
                         pass
-            insights_text = generate_insights(llm, "\n\n".join(ctx_parts), rounds=5)
+            insights_text = generate_insights(llm, "\n\n".join(ctx_parts), rounds=cfg.insight_rounds)
             (Path(out_dir) / "insights.md").write_text(insights_text or "", encoding="utf-8")
             # Reflect and apply improvements suggested by LLM
             steps2 = reflect_and_improve(llm, json.dumps(scores, ensure_ascii=False), extra_context=insights_text or "")
@@ -101,4 +102,3 @@ def run_analysis(csv_path: str, out_dir: str = "data/artifacts", use_llm: bool =
         "s3": s3_result,
         "insights_md": (str(Path(out_dir) / "insights.md") if insights_text is not None else None),
     }
-

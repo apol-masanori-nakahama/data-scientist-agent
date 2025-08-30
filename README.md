@@ -44,6 +44,7 @@ pip install -r requirements.txt
 ```
 - ブラウザで `http://localhost:8501` を開く
 - UI ではサイドバーで CSV をアップロード、またはサンプルデータを生成して体験できます
+- Insights のラウンド数（LLM内省回数）はサイドバーで切替可能（多いほど高品質・時間増）
 
 #### スクリーンショット（UI）
 
@@ -122,8 +123,8 @@ docker run --rm -p 8501:8501 --env-file .env -v "$PWD/data:/app/data" ai-eda-age
 |---|---|---|
 | `ANTHROPIC_API_KEY` | Claude 4 Sonnet 用 | `sk-ant-...` |
 | `OPENAI_API_KEY` | OpenAI モデル用 | `sk-...` |
-| `LLM_PROVIDER` | `anthropic` または `openai`（サンプル設定は `openai`） | `openai` |
-| `LLM_MODEL` | モデル名（OpenAI 推奨: `gpt-5` / Anthropic 例: `claude-sonnet-4-20250514`） | `gpt-5` |
+| `LLM_PROVIDER` | `anthropic` または `openai`（サンプル設定は `anthropic`） | `anthropic` |
+| `LLM_MODEL` | モデル名（Anthropic 推奨: `claude-sonnet-4-20250514` / OpenAI 例: `gpt-5`） | `claude-sonnet-4-20250514` |
 | `LLM_MAX_TOKENS` | LLM 出力最大トークン（既定: 4096） | `8000` |
 | `CLI` | CLI 実行フラグ | `1` |
 | `FAST_TEST` | 高速化（CV縮小・推定器軽量化） | `1` |
@@ -132,7 +133,7 @@ docker run --rm -p 8501:8501 --env-file .env -v "$PWD/data:/app/data" ai-eda-age
 
 LLM 未設定でも、EDA はフォールバック手順で動作します（Insights は未生成）。
 
-補足: 本リポジトリは `.env` で `LLM_PROVIDER=openai` と `LLM_MODEL=gpt-5` を例示しています。Anthropic を使う場合は環境変数を切り替えてください。
+補足: 本リポジトリは `.env` で `LLM_PROVIDER=anthropic` と `LLM_MODEL=claude-sonnet-4-20250514` を既定例としています。OpenAI を使う場合は環境変数を切り替えてください。
 
 ## 生成物
 `data/artifacts/` に保存されます。

@@ -1,15 +1,15 @@
 {
-  "task": "regression",
-  "target": "x",
+  "task": "classification",
+  "target": "Embarked",
   "scores": {
-    "linreg": {
-      "rmse": 3.0073197980397066,
-      "rmse_base": 2.29128784747792
+    "logreg": {
+      "f1_macro": 0.3357565501118021,
+      "f1_base": 0.20977198697068403
     },
-    "rf_reg": {
-      "rmse": 2.9609763374207767,
-      "rmse_base": 2.29128784747792
+    "rf_clf": {
+      "f1_macro": 0.6052406431012656,
+      "f1_base": 0.20977198697068403
     }
   },
-  "best": "rf_reg"
+  "best": "rf_clf"
 }

@@ -17,6 +17,9 @@ def generate_insights(
     context_text: str,
     rounds: int = 5,
     progress: Optional[Callable[[int, int], None]] = None,
+    on_draft: Optional[Callable[[str, int, int], None]] = None,
+    should_stop: Optional[Callable[[], bool]] = None,
+    on_stream: Optional[Callable[[str, int, int], None]] = None,
 ) -> str:
     """Generate iterative insights with self-critique over multiple rounds.
 
@@ -28,11 +31,20 @@ def generate_insights(
         Concatenated plain-text context (scores, heads of tables, etc.)
     rounds: int
         Number of refinement rounds (>=1)
+    on_draft: Optional[Callable[[str, int, int], None]]
+        Optional callback invoked after each round with the current draft and
+        (round_index, total_rounds). Useful for streaming intermediate output to UI.
+    on_stream: Optional[Callable[[str, int, int], None]]
+        Optional callback invoked for token/text chunks during a round, if the
+        underlying LLM client supports streaming (chat_stream). Called very
+        frequently; should be lightweight.
     """
     if rounds < 1:
         rounds = 1
     draft = ""
     for i in range(rounds):
+        if should_stop and should_stop():
+            break
         if progress:
             # report starting round i+1
             try:
@@ -55,8 +67,29 @@ def generate_insights(
                 {"role": "user", "content": f"前ラウンド:\n{draft}\n\nコンテキスト:\n{context_text}"},
             ]
         try:
-            draft = llm.chat(messages)
+            # Prefer streaming if available and on_stream is provided
+            if on_stream is not None and hasattr(llm, "chat_stream"):
+                chunks: list[str] = []
+                def _delta_cb(t: str) -> None:
+                    chunks.append(t)
+                    try:
+                        on_stream(t, i + 1, rounds)
+                    except Exception:
+                        pass
+                # call provider streaming
+                try:
+                    draft = llm.chat_stream(messages, on_delta=_delta_cb)
+                except TypeError:
+                    # Some implementations may not accept keyword name 'on_delta'
+                    draft = llm.chat_stream(messages, _delta_cb)
+            else:
+                draft = llm.chat(messages)
+            if on_draft:
+                try:
+                    on_draft(draft or "", i + 1, rounds)
+                except Exception:
+                    # UI update failures should not abort generation
+                    pass
         except Exception:
             break
     return draft
-

@@ -1,6 +1,6 @@
 # src/llm/client.py
 from __future__ import annotations
-from typing import List, Dict, Any, cast
+from typing import List, Dict, Any, cast, Callable
 import os
 from dotenv import load_dotenv
 
@@ -171,3 +171,150 @@ class LLMClient:
                     parts.append(c.get("text", ""))
             return "\n".join([p for p in parts if p])
         raise NotImplementedError("Unsupported provider")
+
+    def chat_stream(self, messages: List[Dict[str, str]], on_delta: Callable[[str], None], tools: Any = None, tool_choice: Any = None) -> str:
+        """Stream tokens for the given messages. Calls on_delta(text_chunk) repeatedly.
+
+        Returns the final text. Falls back to non-streaming if provider/SDK doesn't support it.
+        """
+        if self._client is None:
+            # No client -> no streaming possible
+            full = self.chat(messages, tools=tools, tool_choice=tool_choice)
+            if full:
+                on_delta(full)
+            return full
+        max_tokens = int(os.getenv("LLM_MAX_TOKENS", "4096"))
+        acc: list[str] = []
+        def _push(txt: str) -> None:
+            if not txt:
+                return
+            acc.append(txt)
+            try:
+                on_delta(txt)
+            except Exception:
+                # UI update failures shouldn't break streaming
+                pass
+        if self.provider == "openai":
+            # Prefer Chat Completions streaming
+            try:
+                token_arg_name = "max_completion_tokens" if str(self.model).lower().startswith("gpt-5") else "max_tokens"
+                kwargs: dict[str, Any] = {
+                    "model": self.model,
+                    "messages": messages,
+                    token_arg_name: max_tokens,
+                    "stream": True,
+                }
+                if not str(self.model).lower().startswith("gpt-5"):
+                    kwargs["temperature"] = self.temperature
+                if tools is not None:
+                    kwargs["tools"] = tools
+                if tool_choice is not None:
+                    kwargs["tool_choice"] = tool_choice
+                stream = self._client.chat.completions.create(**kwargs)  # type: ignore[reportUnknownMemberType]
+                for ev in stream:  # type: ignore[reportUnknownVariableType]
+                    try:
+                        choice = getattr(ev, "choices", None)
+                        if choice and len(choice) > 0:
+                            delta = getattr(choice[0], "delta", None)
+                            if delta is not None:
+                                # delta.content may be str or list
+                                content = getattr(delta, "content", None)
+                                if isinstance(content, str):
+                                    _push(content)
+                                elif isinstance(content, list):
+                                    for c in content:
+                                        if isinstance(c, dict) and c.get("type") == "text":
+                                            _push(str(c.get("text", "")))
+                    except Exception:
+                        continue
+                return "".join(acc)
+            except Exception:
+                # Try Responses streaming if available
+                try:
+                    # Flatten messages first
+                    def _flatten_msgs(msgs: List[Dict[str, str]]) -> str:
+                        parts = []
+                        for m in msgs:
+                            role = m.get("role", "user")
+                            content = m.get("content", "")
+                            if role == "system":
+                                parts.append(f"[system]\n{content}")
+                            elif role == "user":
+                                parts.append(f"[user]\n{content}")
+                            else:
+                                parts.append(f"[{role}]\n{content}")
+                        return "\n\n".join(parts)
+                    flat = _flatten_msgs(messages)
+                    stream_ctx = getattr(self._client, "responses").stream  # type: ignore[attr-defined]
+                    # Some SDKs use context manager API
+                    with stream_ctx(model=self.model, input=flat) as stream:  # type: ignore[reportUnknownMemberType]
+                        for event in stream:  # type: ignore[reportUnknownVariableType]
+                            try:
+                                et = getattr(event, "type", "")
+                                if et.endswith("output_text.delta"):
+                                    delta = getattr(event, "delta", "")
+                                    _push(str(delta))
+                            except Exception:
+                                continue
+                        try:
+                            final = stream.get_final_response()  # type: ignore[attr-defined]
+                            # Best effort to extract final text
+                            if hasattr(final, "output_text"):
+                                text = getattr(final, "output_text")
+                                if text:
+                                    return str(text)
+                        except Exception:
+                            pass
+                    return "".join(acc)
+                except Exception:
+                    # Fall back to non-streaming
+                    full = self.chat(messages, tools=tools, tool_choice=tool_choice)
+                    _push(full)
+                    return full
+        elif self.provider == "anthropic":
+            # Convert OpenAI-style messages to Anthropic format and stream
+            try:
+                sys_prompt = "\n".join(m["content"] for m in messages if m["role"]=="system") if messages else None
+                user_messages = [m for m in messages if m["role"]!="system"]
+                stream_ctx = getattr(self._client, "messages").stream  # type: ignore[attr-defined]
+                with stream_ctx(  # type: ignore[reportUnknownMemberType]
+                    model=self.model,
+                    max_tokens=max_tokens,
+                    temperature=self.temperature,
+                    system=sys_prompt,
+                    messages=[{"role": m["role"], "content": m["content"]} for m in user_messages]
+                ) as stream:
+                    try:
+                        for text in stream.text_stream:  # type: ignore[reportUnknownMemberType]
+                            _push(str(text))
+                    except Exception:
+                        # Some SDK versions provide event stream instead
+                        for ev in stream:  # type: ignore[reportUnknownVariableType]
+                            try:
+                                if getattr(ev, "type", "") == "content_block_delta":
+                                    _push(str(getattr(ev, "delta", {}).get("text", "")))
+                            except Exception:
+                                continue
+                    try:
+                        final_msg = stream.get_final_message()  # type: ignore[attr-defined]
+                        # Flatten final content
+                        parts: list[str] = []
+                        for c in getattr(final_msg, "content", []) or []:
+                            if getattr(c, "type", "text") == "text":
+                                parts.append(getattr(c, "text", ""))
+                            elif isinstance(c, dict):
+                                parts.append(str(c.get("text", "")))
+                        if parts:
+                            return "".join(parts)
+                    except Exception:
+                        pass
+                    return "".join(acc)
+            except Exception:
+                # Fall back to non-streaming
+                full = self.chat(messages, tools=tools, tool_choice=tool_choice)
+                _push(full)
+                return full
+        # Unsupported provider -> non-streaming fallback
+        full = self.chat(messages, tools=tools, tool_choice=tool_choice)
+        _push(full)
+        return full
