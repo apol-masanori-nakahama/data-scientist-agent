@@ -40,6 +40,7 @@ def execute_plan(
 # src/planning/loop.py の next_plan を EDA反省版に差し替え
 EDA_REFLECT = """Given the last observations, improve the EDA.
 If errors occurred, choose simpler alternative (e.g., smaller plots, drop problematic columns).
+Prefer one artifact per step; split multi-plot loops into separate steps for better progress visibility.
 Stop after you have: dtypes, missingness, describe, at least 3 figures.
 Return JSON steps.
 """

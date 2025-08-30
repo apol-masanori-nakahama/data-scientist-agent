@@ -1,0 +1,15 @@
+{
+  "task": "regression",
+  "target": "x",
+  "scores": {
+    "linreg": {
+      "rmse": 3.0073197980397066,
+      "rmse_base": 2.29128784747792
+    },
+    "rf_reg": {
+      "rmse": 2.9609763374207767,
+      "rmse_base": 2.29128784747792
+    }
+  },
+  "best": "rf_reg"
+}

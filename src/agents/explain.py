@@ -1,5 +1,5 @@
 from __future__ import annotations
-from typing import Any
+from typing import Any, Callable, Optional
 
 INSIGHT_SYSTEM_JA = (
     "あなたはシニアデータサイエンティストです。以下の EDA・モデリング成果から、\n"
@@ -12,7 +12,12 @@ INSIGHT_SYSTEM_JA = (
 )
 
 
-def generate_insights(llm: Any, context_text: str, rounds: int = 5) -> str:
+def generate_insights(
+    llm: Any,
+    context_text: str,
+    rounds: int = 5,
+    progress: Optional[Callable[[int, int], None]] = None,
+) -> str:
     """Generate iterative insights with self-critique over multiple rounds.
 
     Parameters
@@ -28,6 +33,12 @@ def generate_insights(llm: Any, context_text: str, rounds: int = 5) -> str:
         rounds = 1
     draft = ""
     for i in range(rounds):
+        if progress:
+            # report starting round i+1
+            try:
+                progress(i + 1, rounds)
+            except Exception:
+                pass
         if i == 0:
             messages = [
                 {"role": "system", "content": INSIGHT_SYSTEM_JA},
@@ -48,5 +59,4 @@ def generate_insights(llm: Any, context_text: str, rounds: int = 5) -> str:
         except Exception:
             break
     return draft
-
 

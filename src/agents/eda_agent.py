@@ -13,11 +13,14 @@ Rules:
 - Save figures/tables under data/artifacts/.
 - Cover: dtypes, missingness, basic stats, target inference (if any), correlations, distributions, time patterns.
 - Keep each code cell focused and idempotent.
+- Prefer ONE artifact per step (avoid loops that produce many plots in one cell). Split plots into separate steps when possible.
+- Print a short log (one line) describing what the cell is doing.
 """
 
 EDA_SEED = """
-Create 4-6 steps to: read CSV, infer dtypes, print shape & head, summarize missing values by column,
-save describe(include='all'), plot top-5 numeric histograms, and output a short textual note with findings.
+Create 6-10 steps to: read CSV, infer dtypes, print shape & head, summarize missing values by column,
+save describe(include='all'), and plot histograms for up to the top-5 numeric columns as SEPARATE steps (one plot per step),
+then output a short textual note with findings. Avoid loops that create many images in one step.
 """
 
 def initial_eda_plan(llm: LLMClient) -> List[Step]:
@@ -67,8 +70,70 @@ miss.to_csv("data/artifacts/cell_missing.csv", index=False)
       "code": """
 import pandas as pd, matplotlib.pyplot as plt
 df = pd.read_csv(INPUT_CSV)
-num = df.select_dtypes(include="number").columns[:5]
-for c in num:
+num = df.select_dtypes(include='number').columns
+print('plot histogram #1 (if available)')
+if len(num) > 0:
+    c = num[0]
+    ax = df[c].dropna().hist(bins=30)
+    ax.figure.suptitle(f"hist_{c}")
+    ax.figure.savefig(f"data/artifacts/cell_hist_{c}.png")
+    plt.close(ax.figure)
+"""
+    },
+    {
+      "action": "python",
+      "code": """
+import pandas as pd, matplotlib.pyplot as plt
+df = pd.read_csv(INPUT_CSV)
+num = df.select_dtypes(include='number').columns
+print('plot histogram #2 (if available)')
+if len(num) > 1:
+    c = num[1]
+    ax = df[c].dropna().hist(bins=30)
+    ax.figure.suptitle(f"hist_{c}")
+    ax.figure.savefig(f"data/artifacts/cell_hist_{c}.png")
+    plt.close(ax.figure)
+"""
+    },
+    {
+      "action": "python",
+      "code": """
+import pandas as pd, matplotlib.pyplot as plt
+df = pd.read_csv(INPUT_CSV)
+num = df.select_dtypes(include='number').columns
+print('plot histogram #3 (if available)')
+if len(num) > 2:
+    c = num[2]
+    ax = df[c].dropna().hist(bins=30)
+    ax.figure.suptitle(f"hist_{c}")
+    ax.figure.savefig(f"data/artifacts/cell_hist_{c}.png")
+    plt.close(ax.figure)
+"""
+    },
+    {
+      "action": "python",
+      "code": """
+import pandas as pd, matplotlib.pyplot as plt
+df = pd.read_csv(INPUT_CSV)
+num = df.select_dtypes(include='number').columns
+print('plot histogram #4 (if available)')
+if len(num) > 3:
+    c = num[3]
+    ax = df[c].dropna().hist(bins=30)
+    ax.figure.suptitle(f"hist_{c}")
+    ax.figure.savefig(f"data/artifacts/cell_hist_{c}.png")
+    plt.close(ax.figure)
+"""
+    },
+    {
+      "action": "python",
+      "code": """
+import pandas as pd, matplotlib.pyplot as plt
+df = pd.read_csv(INPUT_CSV)
+num = df.select_dtypes(include='number').columns
+print('plot histogram #5 (if available)')
+if len(num) > 4:
+    c = num[4]
     ax = df[c].dropna().hist(bins=30)
     ax.figure.suptitle(f"hist_{c}")
     ax.figure.savefig(f"data/artifacts/cell_hist_{c}.png")

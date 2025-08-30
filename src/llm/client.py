@@ -19,7 +19,8 @@ def _normalize_anthropic_model(name: str) -> str:
 class LLMClient:
     def __init__(self, provider: str | None = None, model: str | None = None, temperature: float = 0.2):
         self.provider = provider or os.getenv("LLM_PROVIDER", "anthropic").lower()
-        default_model = "claude-sonnet-4-20250514" if self.provider == "anthropic" else "gpt-4o-mini"
+        # Default model per provider (OpenAI -> GPT-5)
+        default_model = "claude-sonnet-4-20250514" if self.provider == "anthropic" else "gpt-5"
         selected = model or os.getenv("LLM_MODEL", default_model)
         if self.provider == "anthropic":
             selected = _normalize_anthropic_model(selected)
@@ -47,20 +48,109 @@ class LLMClient:
             except Exception:
                 self._client = None
 
+    def is_ready(self, deep: bool = False) -> bool:
+        if self._client is None:
+            return False
+        if not deep:
+            return True
+        try:
+            if self.provider == "openai":
+                try:
+                    _ = getattr(self._client, "models").retrieve(self.model)  # type: ignore[attr-defined]
+                    return True
+                except Exception:
+                    try:
+                        resp = getattr(self._client, "responses").create(  # type: ignore[attr-defined]
+                            model=self.model,
+                            input="ping",
+                            max_output_tokens=1,
+                        )
+                        return bool(resp)
+                    except Exception:
+                        return False
+            elif self.provider == "anthropic":
+                try:
+                    _ = getattr(self._client, "messages").create(  # type: ignore[attr-defined]
+                        model=self.model,
+                        max_tokens=1,
+                        temperature=0.0,
+                        messages=[{"role": "user", "content": "ping"}],
+                    )
+                    return True
+                except Exception:
+                    return False
+            return True
+        except Exception:
+            return False
+
     def chat(self, messages: List[Dict[str, str]], tools: Any = None, tool_choice: Any = None) -> str:
         if self._client is None:
             raise RuntimeError("LLM client not available")
         max_tokens = int(os.getenv("LLM_MAX_TOKENS", "4096"))
         if self.provider == "openai":
-            resp = cast(Any, self._client).chat.completions.create(  # type: ignore[reportUnknownMemberType]
-                model=self.model,
-                messages=messages,
-                temperature=self.temperature,
-                max_tokens=max_tokens,
-                tools=tools,
-                tool_choice=tool_choice
-            )
-            return resp.choices[0].message.content or ""
+            try:
+                # Try Chat Completions first (works for many models)
+                token_arg_name = "max_completion_tokens" if str(self.model).lower().startswith("gpt-5") else "max_tokens"
+                kwargs: dict[str, Any] = {
+                    "model": self.model,
+                    "messages": messages,
+                    token_arg_name: max_tokens,
+                }
+                if not str(self.model).lower().startswith("gpt-5"):
+                    kwargs["temperature"] = self.temperature
+                if tools is not None:
+                    kwargs["tools"] = tools
+                if tool_choice is not None:
+                    kwargs["tool_choice"] = tool_choice
+                resp = cast(Any, self._client).chat.completions.create(  # type: ignore[reportUnknownMemberType]
+                    **kwargs
+                )
+                return resp.choices[0].message.content or ""
+            except Exception:
+                # Fallback to Responses API (common for GPT-5 series)
+                def _flatten_msgs(msgs: List[Dict[str, str]]) -> str:
+                    parts = []
+                    for m in msgs:
+                        role = m.get("role", "user")
+                        content = m.get("content", "")
+                        if role == "system":
+                            parts.append(f"[system]\n{content}")
+                        elif role == "user":
+                            parts.append(f"[user]\n{content}")
+                        else:
+                            parts.append(f"[{role}]\n{content}")
+                    return "\n\n".join(parts)
+                flat = _flatten_msgs(messages)
+                # Prefer `max_output_tokens` in Responses API (some SDKs accept either name)
+                try:
+                    resp = cast(Any, self._client).responses.create(  # type: ignore[reportUnknownMemberType]
+                        model=self.model,
+                        input=flat,
+                        max_output_tokens=max_tokens,
+                    )
+                except Exception:
+                    # Last fallback without token cap
+                    resp = cast(Any, self._client).responses.create(  # type: ignore[reportUnknownMemberType]
+                        model=self.model,
+                        input=flat,
+                    )
+                # Extract text robustly
+                if hasattr(resp, "output_text"):
+                    return cast(Any, resp).output_text  # type: ignore[return-value]
+                data = getattr(resp, "output", None) or getattr(resp, "data", None) or []
+                if isinstance(data, list) and data:
+                    first = data[0]
+                    # SDK shape may vary
+                    if isinstance(first, dict):
+                        content = first.get("content")
+                        if isinstance(content, list) and content and isinstance(content[0], dict):
+                            return str(content[0].get("text", ""))
+                    else:
+                        # Try attribute style
+                        content = getattr(first, "content", None)
+                        if isinstance(content, list) and content:
+                            return str(getattr(content[0], "text", ""))
+                return ""
         if self.provider == "anthropic":
             # Convert OpenAI-style messages to Anthropic format
             sys_prompt = "\n".join(m["content"] for m in messages if m["role"]=="system") if messages else None

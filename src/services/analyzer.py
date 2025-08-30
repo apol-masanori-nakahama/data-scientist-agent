@@ -9,7 +9,7 @@ from src.llm.client import LLMClient
 from src.agents.eda_agent import initial_eda_plan
 from src.planning.loop import execute_plan, next_eda_plan
 from src.reports.report import render_eda
-from src.agents.model_agent import infer_task_and_target, train_candidates
+from src.agents.model_agent import infer_task_and_target, train_candidates, reflect_and_improve
 from src.utils.config import AppConfig
 from src.utils.s3 import upload_directory_to_s3
 
@@ -51,6 +51,36 @@ def run_analysis(csv_path: str, out_dir: str = "data/artifacts", use_llm: bool =
     scores = train_candidates(df, task, ycol)
     Path(out_dir).mkdir(parents=True, exist_ok=True)
     (Path(out_dir) / "model_scores.json").write_text(json.dumps(scores, ensure_ascii=False, indent=2), encoding="utf-8")
+    insights_text: str | None = None
+
+    # Optional: generate insights then reflect improvements and re-train
+    if llm is not None:
+        try:
+            from src.agents.explain import generate_insights
+            ctx_parts: list[str] = ["Model scores: " + json.dumps(scores, ensure_ascii=False)]
+            for name in ["model_slice_metrics.csv", "model_missing_impact.csv", "model_partial_corr.csv"]:
+                p = Path(out_dir) / name
+                if p.exists():
+                    try:
+                        import pandas as _pd
+                        ctx_parts.append(f"{name} (head):\n" + _pd.read_csv(p).head(20).to_string(index=False))
+                    except Exception:
+                        pass
+            insights_text = generate_insights(llm, "\n\n".join(ctx_parts), rounds=5)
+            (Path(out_dir) / "insights.md").write_text(insights_text or "", encoding="utf-8")
+            # Reflect and apply improvements suggested by LLM
+            steps2 = reflect_and_improve(llm, json.dumps(scores, ensure_ascii=False), extra_context=insights_text or "")
+            if steps2:
+                from src.runners.code_runner import run_python as _run_py
+                for s in steps2:
+                    if s.get("action") == "python":
+                        _run_py(s.get("code", ""), input_csv=csv_path, workdir=out_dir)
+                # Re-train after applying suggestions
+                df = pd.read_csv(csv_path)
+                scores = train_candidates(df, task, ycol)
+                (Path(out_dir) / "model_scores.json").write_text(json.dumps(scores, ensure_ascii=False, indent=2), encoding="utf-8")
+        except Exception:
+            pass
 
     s3_result: dict | None = None
     if options.upload_s3:
@@ -69,6 +99,6 @@ def run_analysis(csv_path: str, out_dir: str = "data/artifacts", use_llm: bool =
         "scores": scores,
         "turns": len(log.turns),
         "s3": s3_result,
+        "insights_md": (str(Path(out_dir) / "insights.md") if insights_text is not None else None),
     }
-
 

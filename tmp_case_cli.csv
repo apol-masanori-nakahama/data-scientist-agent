@@ -1,0 +1,7 @@
+target,feature_cat,feature_num
+0,A,1
+1,B,2
+0,A,3
+1,A,4
+0,B,5
+1,B,6
