@@ -106,7 +106,63 @@ if st and run and (up or sample):
         
         # EDA初期プラン
         progress_system.start_phase("EDA初期分析", message="データの基本的な探索を開始します")
-        steps = initial_eda_plan(llm)
+        # 明示のプラン生成表示（スピナー + 擬似進捗メッセージ + 過去平均 + ヒント）
+        if st:
+            # 注意: st.statusはネスト不可のため、ここではst.spinnerを使用
+            with st.spinner("プラン生成中…"):
+                tips = [
+                    "LLM 接続確認（サイドバーの『LLM 接続確認』）",
+                    "ネットワーク状況を確認（VPN/プロキシの影響など）",
+                    "INSIGHT_ROUNDS を減らす（反復回数を少なく）",
+                    "LLM_PROVIDER/LLM_MODEL の切り替え（高速モデルへ）",
+                    "一時的にサンプルデータで試す（問題の切り分け）",
+                ]
+                # ヒント表示（expander禁止のため、必要時のみインライン表示）
+                avg_prev = None
+                if 'plan_gen_times' in st.session_state and st.session_state['plan_gen_times']:
+                    avg_prev = sum(st.session_state['plan_gen_times'])/len(st.session_state['plan_gen_times'])
+                st.caption(f"過去平均 応答時間: {avg_prev:.1f}s" if avg_prev else "過去平均 応答時間: 計測中…")
+                if avg_prev and avg_prev > 20.0:
+                    _tips_md = "\n".join([f"- {t}" for t in tips])
+                    st.markdown("ヒント:\n" + _tips_md)
+                try:
+                    # ダッシュボードにも反映（カウントは進めない）
+                    progress_system.progress_manager.update_step("プラン生成中…", increment=0, message="LLM 応答待ち")
+                except Exception:
+                    pass
+                _t0 = time.time()
+                steps = initial_eda_plan(llm)
+                _dur = max(0.0, time.time() - _t0)
+                try:
+                    progress_system.progress_manager.set_total_steps(len(steps))
+                except Exception:
+                    pass
+                # 共有: 過去平均の更新
+                try:
+                    if 'plan_gen_times' not in st.session_state:
+                        st.session_state['plan_gen_times'] = []
+                    st.session_state['plan_gen_times'].append(_dur)
+                    avg_now = sum(st.session_state['plan_gen_times'])/len(st.session_state['plan_gen_times'])
+                except Exception:
+                    avg_now = None
+                lbl = f"プラン生成完了（{len(steps)} ステップ, {_dur:.1f}s"
+                if avg_now:
+                    lbl += f", 平均 {avg_now:.1f}s"
+                lbl += ")"
+                st.caption(lbl)
+        else:
+            # Streamlitがない場合でも状態だけ更新
+            try:
+                progress_system.progress_manager.update_step("プラン生成中…", increment=0, message="LLM 応答待ち")
+            except Exception:
+                pass
+            _t0 = time.time()
+            steps = initial_eda_plan(llm)
+            _dur = max(0.0, time.time() - _t0)
+            try:
+                progress_system.progress_manager.set_total_steps(len(steps))
+            except Exception:
+                pass
         
         prog = st.progress(0.0)
         logbox = st.empty()
@@ -137,9 +193,12 @@ if st and run and (up or sample):
                 "stderr": obs.stderr[-400:]
             })
             
-            # 統合進捗システムに情報を送信
+            # 統合進捗システムに情報を送信（カウンタはexecute_plan側で進むため、ここでは増やさない）
             step_name = f"{step.action}: {(preview or '')[:50]}"
-            progress_system.update_step(step_name, f"ステップ {idx+1}/{total}")
+            try:
+                progress_system.progress_manager.update_step(step_name, increment=0, message=f"ステップ {idx+1}/{total}")
+            except Exception:
+                pass
         
         log = execute_plan(steps, csv_path, log, on_step=_on, 
                           progress_manager=progress_system.progress_manager, 
@@ -150,8 +209,60 @@ if st and run and (up or sample):
         # 反省・改善フェーズ
         for i in range(reflect_rounds_ui):
             progress_system.start_phase(f"EDA改善 ラウンド{i+1}", message=f"分析結果を改善します（{i+1}/{reflect_rounds_ui}）")
-            steps = next_eda_plan(llm, log)
-            total = max(1, len(steps))
+            # ラウンドごとのプラン生成スピナー + ヒント + 平均表示
+            if st:
+                # 注意: st.statusはネスト不可のため、ここではst.spinnerを使用
+                with st.spinner("プラン生成中…"):
+                    tips2 = [
+                        "エラーが多い場合は列数/行数をサンプリング",
+                        "図の作成は1枚/ステップに分割して軽量化",
+                        "LLMのタイムアウト/レート制限状況を確認",
+                        "必要に応じてFEWSHOTにフォールバック",
+                    ]
+                    avg_prev2 = None
+                    if 'plan_gen_times' in st.session_state and st.session_state['plan_gen_times']:
+                        avg_prev2 = sum(st.session_state['plan_gen_times'])/len(st.session_state['plan_gen_times'])
+                    st.caption(f"過去平均 応答時間: {avg_prev2:.1f}s" if avg_prev2 else "過去平均 応答時間: 計測中…")
+                    if avg_prev2 and avg_prev2 > 20.0:
+                        _tips2_md = "\n".join([f"- {t}" for t in tips2])
+                        st.markdown("ヒント:\n" + _tips2_md)
+                    try:
+                        progress_system.progress_manager.update_step("プラン生成中…", increment=0, message="LLM 応答待ち")
+                    except Exception:
+                        pass
+                    _t1 = time.time()
+                    steps = next_eda_plan(llm, log)
+                    _dur2 = max(0.0, time.time() - _t1)
+                    total = max(1, len(steps))
+                    try:
+                        progress_system.progress_manager.set_total_steps(len(steps))
+                    except Exception:
+                        pass
+                    try:
+                        if 'plan_gen_times' not in st.session_state:
+                            st.session_state['plan_gen_times'] = []
+                        st.session_state['plan_gen_times'].append(_dur2)
+                        avg_now2 = sum(st.session_state['plan_gen_times'])/len(st.session_state['plan_gen_times'])
+                    except Exception:
+                        avg_now2 = None
+                    lbl2 = f"プラン生成完了（{len(steps)} ステップ, {_dur2:.1f}s"
+                    if avg_now2:
+                        lbl2 += f", 平均 {avg_now2:.1f}s"
+                    lbl2 += ")"
+                    st.caption(lbl2)
+            else:
+                try:
+                    progress_system.progress_manager.update_step("プラン生成中…", increment=0, message="LLM 応答待ち")
+                except Exception:
+                    pass
+                _t1 = time.time()
+                steps = next_eda_plan(llm, log)
+                _dur2 = max(0.0, time.time() - _t1)
+                total = max(1, len(steps))
+                try:
+                    progress_system.progress_manager.set_total_steps(len(steps))
+                except Exception:
+                    pass
             log = execute_plan(steps, csv_path, log, on_step=_on,
                               progress_manager=progress_system.progress_manager,
                               phase_name=f"EDA改善 ラウンド{i+1}")
@@ -648,7 +759,29 @@ if __name__ == "__main__" and os.getenv("CLI","0") == "1":
     
     if has_llm:
         assert llm is not None
+        # CLI: プラン生成中メッセージ（擬似進捗）
+        try:
+            cli_progress.progress_manager.update_step("プラン生成中…", increment=0, message="LLM 応答待ち")
+        except Exception:
+            pass
+        print("[planning] プラン生成中… (LLM)")
+        _t0 = time.time()
         steps = initial_eda_plan(llm)
+        _dur_cli0 = max(0.0, time.time() - _t0)
+        print(f"[planning] 完了: {len(steps)} steps in {_dur_cli0:.1f}s")
+        try:
+            # 平均を簡易的に計算（このプロセス内でのみ）
+            if not hasattr(sys.modules[__name__], "_cli_plan_times"):
+                setattr(sys.modules[__name__], "_cli_plan_times", [])
+            sys.modules[__name__]._cli_plan_times.append(_dur_cli0)  # type: ignore[attr-defined]
+            _avg_cli = sum(sys.modules[__name__]._cli_plan_times)/len(sys.modules[__name__]._cli_plan_times)  # type: ignore[attr-defined]
+            print(f"[planning] 平均応答時間: {_avg_cli:.1f}s")
+        except Exception:
+            pass
+        try:
+            cli_progress.progress_manager.set_total_steps(len(steps))
+        except Exception:
+            pass
     else:
         from src.agents.eda_agent import EDA_FEWSHOT
         steps = [
@@ -682,9 +815,12 @@ if __name__ == "__main__" and os.getenv("CLI","0") == "1":
             "preview": (preview or "")[:120]
         }, ensure_ascii=False))
         
-        # 統合進捗システム更新
+        # 統合進捗システム更新（カウントはexecute_plan側で進むため0インクリメント）
         step_name = f"{step.action}: {(preview or '')[:50]}"
-        cli_progress.update_step(step_name, f"ステップ {idx+1}/{total}")
+        try:
+            cli_progress.progress_manager.update_step(step_name, increment=0, message=f"ステップ {idx+1}/{total}")
+        except Exception:
+            pass
     
     log = execute_plan(steps, csv, log, on_step=_on_cli,
                       progress_manager=cli_progress.progress_manager,
@@ -695,8 +831,28 @@ if __name__ == "__main__" and os.getenv("CLI","0") == "1":
         if has_llm:
             assert llm is not None
             cli_progress.start_phase(f"EDA改善 ラウンド{i+1}", message=f"分析結果を改善します（{i+1}/2）")
+            try:
+                cli_progress.progress_manager.update_step("プラン生成中…", increment=0, message="LLM 応答待ち")
+            except Exception:
+                pass
+            print(f"[planning] EDA改善 ラウンド{i+1}: プラン生成中… (LLM)")
+            _t1 = time.time()
             steps = next_eda_plan(llm, log)
+            _dur_cli = max(0.0, time.time() - _t1)
+            print(f"[planning] EDA改善 ラウンド{i+1}: 完了 {len(steps)} steps in {_dur_cli:.1f}s")
+            try:
+                if not hasattr(sys.modules[__name__], "_cli_plan_times"):
+                    setattr(sys.modules[__name__], "_cli_plan_times", [])
+                sys.modules[__name__]._cli_plan_times.append(_dur_cli)  # type: ignore[attr-defined]
+                _avg_cli2 = sum(sys.modules[__name__]._cli_plan_times)/len(sys.modules[__name__]._cli_plan_times)  # type: ignore[attr-defined]
+                print(f"[planning] 平均応答時間: {_avg_cli2:.1f}s")
+            except Exception:
+                pass
             total = max(1, len(steps))
+            try:
+                cli_progress.progress_manager.set_total_steps(len(steps))
+            except Exception:
+                pass
             phase_idx += 1
             log = execute_plan(steps, csv, log, on_step=_on_cli,
                               progress_manager=cli_progress.progress_manager,

@@ -21,7 +21,15 @@ def execute_plan(
 ) -> RunLog:
     # 進捗管理の初期化
     if progress_manager:
-        progress_manager.start_phase(phase_name, len(steps))
+        # 既に同一フェーズ名で開始されている場合は、フェーズを再初期化せず総ステップのみ設定
+        try:
+            if getattr(progress_manager, "state", None) and progress_manager.state.phase == phase_name:
+                progress_manager.set_total_steps(len(steps))
+            else:
+                progress_manager.start_phase(phase_name, len(steps))
+        except Exception:
+            # フェーズ状態取得に失敗した場合はフォールバックで開始
+            progress_manager.start_phase(phase_name, len(steps))
     
     progress_logger = create_progress_logger("execute_plan")
     tracker = ProgressTracker()
