@@ -827,38 +827,76 @@ if __name__ == "__main__" and os.getenv("CLI","0") == "1":
                       phase_name="EDA初期分析")
 
     # 2) 反省→再計画を最大2回
-    for i in range(2):
+    max_improvement_rounds = 2
+    consecutive_failures = 0
+    max_consecutive_failures = 2
+    
+    for i in range(max_improvement_rounds):
         if has_llm:
             assert llm is not None
-            cli_progress.start_phase(f"EDA改善 ラウンド{i+1}", message=f"分析結果を改善します（{i+1}/2）")
+            cli_progress.start_phase(f"EDA改善 ラウンド{i+1}", message=f"分析結果を改善します（{i+1}/{max_improvement_rounds}）")
             try:
                 cli_progress.progress_manager.update_step("プラン生成中…", increment=0, message="LLM 応答待ち")
             except Exception:
                 pass
             print(f"[planning] EDA改善 ラウンド{i+1}: プラン生成中… (LLM)")
-            _t1 = time.time()
-            steps = next_eda_plan(llm, log)
-            _dur_cli = max(0.0, time.time() - _t1)
-            print(f"[planning] EDA改善 ラウンド{i+1}: 完了 {len(steps)} steps in {_dur_cli:.1f}s")
+            
             try:
-                if not hasattr(sys.modules[__name__], "_cli_plan_times"):
-                    setattr(sys.modules[__name__], "_cli_plan_times", [])
-                sys.modules[__name__]._cli_plan_times.append(_dur_cli)  # type: ignore[attr-defined]
-                _avg_cli2 = sum(sys.modules[__name__]._cli_plan_times)/len(sys.modules[__name__]._cli_plan_times)  # type: ignore[attr-defined]
-                print(f"[planning] 平均応答時間: {_avg_cli2:.1f}s")
-            except Exception:
-                pass
-            total = max(1, len(steps))
-            try:
-                cli_progress.progress_manager.set_total_steps(len(steps))
-            except Exception:
-                pass
-            phase_idx += 1
-            log = execute_plan(steps, csv, log, on_step=_on_cli,
-                              progress_manager=cli_progress.progress_manager,
-                              phase_name=f"EDA改善 ラウンド{i+1}")
-            if any(s.action=="stop" for s in steps):
-                break
+                _t1 = time.time()
+                steps = next_eda_plan(llm, log)
+                _dur_cli = max(0.0, time.time() - _t1)
+                print(f"[planning] EDA改善 ラウンド{i+1}: 完了 {len(steps)} steps in {_dur_cli:.1f}s")
+                
+                # 空のステップリストまたは無効なステップをチェック
+                if not steps or len(steps) == 0:
+                    consecutive_failures += 1
+                    print(f"[warning] 空のプランが生成されました (連続失敗: {consecutive_failures}/{max_consecutive_failures})")
+                    if consecutive_failures >= max_consecutive_failures:
+                        print("[error] 連続してプラン生成に失敗したため、改善ラウンドを終了します")
+                        break
+                    continue
+                
+                # 全てのステップがstopアクションの場合も終了
+                if all(s.action == "stop" for s in steps):
+                    print("[info] 全ステップが停止アクションのため、改善ラウンドを終了します")
+                    break
+                
+                # 成功した場合は連続失敗カウントをリセット
+                consecutive_failures = 0
+                
+                try:
+                    if not hasattr(sys.modules[__name__], "_cli_plan_times"):
+                        setattr(sys.modules[__name__], "_cli_plan_times", [])
+                    sys.modules[__name__]._cli_plan_times.append(_dur_cli)  # type: ignore[attr-defined]
+                    _avg_cli2 = sum(sys.modules[__name__]._cli_plan_times)/len(sys.modules[__name__]._cli_plan_times)  # type: ignore[attr-defined]
+                    print(f"[planning] 平均応答時間: {_avg_cli2:.1f}s")
+                except Exception:
+                    pass
+                    
+                total = max(1, len(steps))
+                try:
+                    cli_progress.progress_manager.set_total_steps(len(steps))
+                except Exception:
+                    pass
+                phase_idx += 1
+                
+                # プラン実行
+                log = execute_plan(steps, csv, log, on_step=_on_cli,
+                                  progress_manager=cli_progress.progress_manager,
+                                  phase_name=f"EDA改善 ラウンド{i+1}")
+                
+                # 明示的な停止条件をチェック
+                if any(s.action == "stop" for s in steps):
+                    print("[info] 停止アクションが検出されたため、改善ラウンドを終了します")
+                    break
+                    
+            except Exception as e:
+                consecutive_failures += 1
+                print(f"[error] EDA改善 ラウンド{i+1}でエラーが発生: {str(e)} (連続失敗: {consecutive_failures}/{max_consecutive_failures})")
+                if consecutive_failures >= max_consecutive_failures:
+                    print("[error] 連続してエラーが発生したため、改善ラウンドを終了します")
+                    break
+                continue
         else:
             break
     
