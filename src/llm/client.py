@@ -196,6 +196,7 @@ class LLMClient:
                 pass
         if self.provider == "openai":
             # Prefer Chat Completions streaming
+            stream = None
             try:
                 token_arg_name = "max_completion_tokens" if str(self.model).lower().startswith("gpt-5") else "max_tokens"
                 kwargs: dict[str, Any] = {
@@ -211,22 +212,32 @@ class LLMClient:
                 if tool_choice is not None:
                     kwargs["tool_choice"] = tool_choice
                 stream = self._client.chat.completions.create(**kwargs)  # type: ignore[reportUnknownMemberType]
-                for ev in stream:  # type: ignore[reportUnknownVariableType]
-                    try:
-                        choice = getattr(ev, "choices", None)
-                        if choice and len(choice) > 0:
-                            delta = getattr(choice[0], "delta", None)
-                            if delta is not None:
-                                # delta.content may be str or list
-                                content = getattr(delta, "content", None)
-                                if isinstance(content, str):
-                                    _push(content)
-                                elif isinstance(content, list):
-                                    for c in content:
-                                        if isinstance(c, dict) and c.get("type") == "text":
-                                            _push(str(c.get("text", "")))
-                    except Exception:
-                        continue
+                
+                try:
+                    for ev in stream:  # type: ignore[reportUnknownVariableType]
+                        try:
+                            choice = getattr(ev, "choices", None)
+                            if choice and len(choice) > 0:
+                                delta = getattr(choice[0], "delta", None)
+                                if delta is not None:
+                                    # delta.content may be str or list
+                                    content = getattr(delta, "content", None)
+                                    if isinstance(content, str):
+                                        _push(content)
+                                    elif isinstance(content, list):
+                                        for c in content:
+                                            if isinstance(c, dict) and c.get("type") == "text":
+                                                _push(str(c.get("text", "")))
+                        except Exception:
+                            continue
+                finally:
+                    # ストリームリソースを適切に解放
+                    if stream is not None and hasattr(stream, 'close'):
+                        try:
+                            stream.close()  # type: ignore[attr-defined]
+                        except Exception:
+                            pass
+                            
                 return "".join(acc)
             except Exception:
                 # Try Responses streaming if available
@@ -273,10 +284,13 @@ class LLMClient:
                     return full
         elif self.provider == "anthropic":
             # Convert OpenAI-style messages to Anthropic format and stream
+            stream = None
             try:
                 sys_prompt = "\n".join(m["content"] for m in messages if m["role"]=="system") if messages else None
                 user_messages = [m for m in messages if m["role"]!="system"]
                 stream_ctx = getattr(self._client, "messages").stream  # type: ignore[attr-defined]
+                
+                # Context managerを使用してリソースの適切な管理を保証
                 with stream_ctx(  # type: ignore[reportUnknownMemberType]
                     model=self.model,
                     max_tokens=max_tokens,
@@ -285,35 +299,55 @@ class LLMClient:
                     messages=[{"role": m["role"], "content": m["content"]} for m in user_messages]
                 ) as stream:
                     try:
-                        for text in stream.text_stream:  # type: ignore[reportUnknownMemberType]
-                            _push(str(text))
-                    except Exception:
-                        # Some SDK versions provide event stream instead
-                        for ev in stream:  # type: ignore[reportUnknownVariableType]
-                            try:
-                                if getattr(ev, "type", "") == "content_block_delta":
-                                    _push(str(getattr(ev, "delta", {}).get("text", "")))
-                            except Exception:
-                                continue
-                    try:
-                        final_msg = stream.get_final_message()  # type: ignore[attr-defined]
-                        # Flatten final content
-                        parts: list[str] = []
-                        for c in getattr(final_msg, "content", []) or []:
-                            if getattr(c, "type", "text") == "text":
-                                parts.append(getattr(c, "text", ""))
-                            elif isinstance(c, dict):
-                                parts.append(str(c.get("text", "")))
-                        if parts:
-                            return "".join(parts)
-                    except Exception:
+                        # まずtext_streamを試す
+                        if hasattr(stream, 'text_stream'):
+                            for text in stream.text_stream:  # type: ignore[reportUnknownMemberType]
+                                _push(str(text))
+                        else:
+                            # text_streamが利用できない場合はevent streamを使用
+                            for ev in stream:  # type: ignore[reportUnknownVariableType]
+                                try:
+                                    if getattr(ev, "type", "") == "content_block_delta":
+                                        _push(str(getattr(ev, "delta", {}).get("text", "")))
+                                except Exception:
+                                    continue
+                    except Exception as stream_error:
+                        # ストリーミング処理中のエラーをログに記録
+                        print(f"[warning] Streaming error: {stream_error}")
+                        # エラーが発生してもaccumulatorの内容は返す
                         pass
+                    finally:
+                        # 最終メッセージの取得を試行（オプション）
+                        try:
+                            if hasattr(stream, 'get_final_message'):
+                                final_msg = stream.get_final_message()  # type: ignore[attr-defined]
+                                # Flatten final content
+                                parts: list[str] = []
+                                for c in getattr(final_msg, "content", []) or []:
+                                    if getattr(c, "type", "text") == "text":
+                                        parts.append(getattr(c, "text", ""))
+                                    elif isinstance(c, dict):
+                                        parts.append(str(c.get("text", "")))
+                                if parts:
+                                    final_text = "".join(parts)
+                                    if final_text and final_text != "".join(acc):
+                                        return final_text
+                        except Exception:
+                            # 最終メッセージ取得に失敗してもaccumulatorの内容を使用
+                            pass
+                    
                     return "".join(acc)
-            except Exception:
+                    
+            except Exception as outer_error:
+                print(f"[warning] Anthropic streaming failed: {outer_error}")
                 # Fall back to non-streaming
-                full = self.chat(messages, tools=tools, tool_choice=tool_choice)
-                _push(full)
-                return full
+                try:
+                    full = self.chat(messages, tools=tools, tool_choice=tool_choice)
+                    _push(full)
+                    return full
+                except Exception as fallback_error:
+                    print(f"[error] Fallback to non-streaming also failed: {fallback_error}")
+                    return "".join(acc)  # 何らかの結果を返す
         # Unsupported provider -> non-streaming fallback
         full = self.chat(messages, tools=tools, tool_choice=tool_choice)
         _push(full)

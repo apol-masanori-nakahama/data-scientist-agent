@@ -22,6 +22,27 @@ class ImportGuard(ast.NodeVisitor):
 
 def run_python(code: str, input_csv: str | None = None, workdir: str = "data/artifacts") -> dict:
     os.makedirs(workdir, exist_ok=True)
+    
+    # セキュリティ: input_csvのパストラバーサル攻撃を防ぐ
+    if input_csv:
+        # パスを正規化し、危険な文字をチェック
+        normalized_path = os.path.normpath(input_csv)
+        if os.path.isabs(normalized_path):
+            # 絶対パスの場合、許可されたディレクトリ内かチェック
+            allowed_dirs = [os.path.abspath("data"), os.path.abspath("tmp")]
+            if not any(normalized_path.startswith(allowed_dir) for allowed_dir in allowed_dirs):
+                return {"ok": False, "stdout": "", "stderr": f"Access denied: {input_csv} is outside allowed directories", "artifacts": []}
+        else:
+            # 相対パスの場合、../ を含む危険なパスを拒否
+            if ".." in normalized_path or normalized_path != input_csv:
+                return {"ok": False, "stdout": "", "stderr": f"Invalid path: {input_csv} contains dangerous characters", "artifacts": []}
+            # 現在のディレクトリからの相対パスに変換
+            normalized_path = os.path.abspath(input_csv)
+        
+        # ファイルの存在確認
+        if not os.path.exists(normalized_path):
+            return {"ok": False, "stdout": "", "stderr": f"File not found: {input_csv}", "artifacts": []}
+    
     # 静的にImport検査
     tree = ast.parse(code)
     guard = ImportGuard(); guard.visit(tree)
@@ -42,7 +63,8 @@ def run_python(code: str, input_csv: str | None = None, workdir: str = "data/art
         f.write("except Exception:\n")
         f.write("    pass\n")
         if input_csv:
-            f.write(f"INPUT_CSV=r'''{input_csv}'''\n")
+            # 正規化されたパスを使用
+            f.write(f"INPUT_CSV=r'''{normalized_path}'''\n")
         f.write(code)
 
     # 実行
