@@ -50,9 +50,9 @@ def execute_plan(
             obs = Observation(r["ok"], r["stdout"], r["stderr"], r["artifacts"])
             log.turns.append(Turn(step=s, observation=obs))
             
-            # アーティファクト情報を進捗に追加
+            # アーティファクト情報を進捗に追加（ステップ数は増やさない）
             if progress_manager and r["artifacts"]:
-                progress_manager.update_step(artifacts=r["artifacts"])
+                progress_manager.update_step(increment=0, artifacts=r["artifacts"])
             
             if on_step:
                 on_step(idx, s, obs)
